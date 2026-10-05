@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Afet Modu · API Dökümantasyonu</title>
+  <meta name="description" content="Afet Modu API Dökümantasyonu — ING Hubs Türkiye Agentic AI Hackathon. auth-service, core-service, disaster-service ve agent-service uç noktaları." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ing: #FF6200;
+      --ing-d: #E05500;
+      --ing-bg: rgba(255,98,0,0.1);
+      --ing-border: rgba(255,98,0,0.35);
+      --bg: #090B0F;
+      --bg-c: #101318;
+      --bg-h: #181C24;
+      --border: rgba(255,255,255,0.07);
+      --t1: #F1F3F7;
+      --t2: #8B9AB1;
+      --t3: #4A5568;
+      --green: #22C55E;
+      --blue: #3B82F6;
+      --purple: #A855F7;
+      --yellow: #EAB308;
+      --red: #EF4444;
+      --r: 12px; --rs: 8px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+
+    /* HERO */
+    .hero{background:linear-gradient(135deg,#090B0F,#0F1520,#090B0F);border-bottom:1px solid var(--border);padding:52px 24px 44px;text-align:center;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:700px;height:320px;background:radial-gradient(ellipse,rgba(255,98,0,0.16) 0%,transparent 70%);pointer-events:none}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:var(--ing-bg);border:1px solid var(--ing-border);border-radius:100px;padding:6px 18px;font-size:11px;font-weight:700;color:var(--ing);letter-spacing:.08em;text-transform:uppercase;margin-bottom:22px}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--ing);animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+    h1{font-size:clamp(26px,5vw,46px);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-bottom:14px}
+    h1 span{color:var(--ing)}
+    .hero p{color:var(--t2);font-size:15px;max-width:520px;margin:0 auto 30px;line-height:1.7}
+    .stats{display:flex;justify-content:center;gap:36px;flex-wrap:wrap}
+    .stat .v{font-size:26px;font-weight:700;color:var(--ing);font-family:'JetBrains Mono',monospace}
+    .stat .l{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+
+    /* LAYOUT */
+    .layout{display:flex;max-width:1300px;margin:0 auto}
+
+    /* SIDEBAR */
+    .sidebar{width:255px;flex-shrink:0;padding:28px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--border)}
+    .sidebar::-webkit-scrollbar{width:3px}
+    .sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    .sg{margin-bottom:26px}
+    .sg-t{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;padding:0 8px;margin-bottom:8px}
+    .si{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:var(--rs);font-size:12.5px;color:var(--t2);cursor:pointer;text-decoration:none;transition:all .18s;border:1px solid transparent}
+    .si:hover{background:var(--bg-h);color:var(--t1)}
+    .si.active{background:var(--ing-bg);color:var(--ing);border-color:var(--ing-border);font-weight:500}
+    .mb{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.04em;flex-shrink:0}
+    .mg{background:rgba(34,197,94,.15);color:var(--green)}
+    .mp{background:rgba(59,130,246,.15);color:var(--blue)}
+
+    /* MAIN */
+    .main{flex:1;padding:32px 38px;min-width:0}
+
+    /* SECTION */
+    .sec{margin-bottom:56px}
+    .sec-hdr{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+    .svc-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .sec-hdr h2{font-size:20px;font-weight:700;letter-spacing:-.01em}
+    .port{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t3);background:var(--bg-c);border:1px solid var(--border);padding:3px 10px;border-radius:100px;margin-left:6px}
+    .desc{font-size:13px;color:var(--t2);margin-top:2px}
+
+    /* ENDPOINT CARD */
+    .ec{background:var(--bg-c);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;transition:border-color .2s}
+    .ec:hover{border-color:rgba(255,98,0,.18)}
+    .eh{display:flex;align-items:center;gap:12px;padding:15px 20px;cursor:pointer;user-select:none}
+    .eh:hover{background:var(--bg-h)}
+    .em{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:.06em;min-width:50px;text-align:center;flex-shrink:0}
+    .em-get{background:rgba(34,197,94,.15);color:var(--green)}
+    .em-post{background:rgba(59,130,246,.15);color:var(--blue)}
+    .ep{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;flex:1}
+    .es{font-size:12px;color:var(--t2);flex:1}
+    .ea{font-size:10px;padding:3px 8px;border-radius:100px;border:1px solid;flex-shrink:0}
+    .ea-r{color:var(--yellow);border-color:rgba(234,179,8,.3);background:rgba(234,179,8,.08)}
+    .ea-o{color:var(--green);border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.08)}
+    .ei{color:var(--t3);transition:transform .2s;font-size:13px}
+    .ec.open .ei{transform:rotate(90deg)}
+    .eb{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+    .ec.open .eb{display:block}
+
+    /* TABLES */
+    .pt{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:14px}
+    .pt th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:8px 12px;border-bottom:1px solid var(--border)}
+    .pt td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+    .pt tr:last-child td{border-bottom:none}
+    .pn{font-family:'JetBrains Mono',monospace;color:var(--ing);font-size:12px}
+    .pty{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--purple)}
+    .req{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+    .opt{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(139,154,177,.1);color:var(--t3);border:1px solid var(--border)}
+
+    /* CODE */
+    .cb{background:#07090D;border:1px solid var(--border);border-radius:var(--rs);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.75;color:#9BAFC8;overflow-x:auto;margin-top:10px}
+    .cb .k{color:#7DD3FC} .cb .s{color:#86EFAC} .cb .n{color:#FCA5A5} .cb .b{color:#C084FC} .cb .c{color:#4A5568;font-style:italic}
+    .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-top:14px;margin-bottom:4px}
+
+    /* STATUS */
+    .rl{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    .ri{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--t2)}
+    .sc{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0}
+    .s2{background:rgba(34,197,94,.15);color:var(--green)}
+    .s4{background:rgba(239,68,68,.15);color:var(--red)}
+    .s40{background:rgba(234,179,8,.15);color:var(--yellow)}
+    .s409{background:rgba(168,85,247,.15);color:var(--purple)}
+
+    /* KAFKA */
+    .kc{background:var(--bg-c);border:1px solid var(--border);border-left:3px solid var(--ing);border-radius:var(--r);padding:18px;margin-bottom:12px}
+    .kt{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--ing);margin-bottom:6px}
+    .km{display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+    .kmi{font-size:11px;color:var(--t3)}
+    .kmi span{color:var(--t2);margin-left:4px}
+
+    /* CUSTOMERS */
+    .cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:14px}
+    .cc{background:var(--bg-c);border:1px solid var(--border);border-radius:var(--rs);padding:16px;transition:border-color .2s}
+    .cc:hover{border-color:rgba(255,98,0,.22)}
+    .cn{font-weight:600;font-size:14px;margin-bottom:12px}
+    .cr{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--t2)}
+    .cr .v{color:var(--t1);font-weight:500}
+
+    /* BOXES */
+    .ib{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:var(--rs);padding:12px 16px;font-size:12.5px;color:#93C5FD;margin-top:12px;line-height:1.65}
+    .wb{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.2);border-radius:var(--rs);padding:12px 16px;font-size:12.5px;color:#FDE68A;margin-top:12px;line-height:1.65}
+    .sc-card{background:linear-gradient(135deg,rgba(255,98,0,.06),rgba(255,98,0,.02));border:1px solid var(--ing-border);border-radius:var(--r);padding:22px;margin-bottom:22px}
+
+    footer{text-align:center;padding:30px;border-top:1px solid var(--border);color:var(--t3);font-size:12px}
+    @media(max-width:768px){.sidebar{display:none}.main{padding:18px 14px}}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badge"><div class="dot"></div>ING Hubs Türkiye · Agentic AI Hackathon</div>
+  <h1>Afet Modu <span>API</span> Dökümantasyonu</h1>
+  <p>Müşteri başvurmaz, banka müşteriye gelir. Simüle edilen afet senaryosu için otonom ajan sistemi.</p>
+  <div class="stats">
+    <div class="stat"><div class="v">4</div><div class="l">Mikroservis</div></div>
+    <div class="stat"><div class="v">2</div><div class="l">AI Ajan</div></div>
+    <div class="stat"><div class="v">4</div><div class="l">Araç (Tool)</div></div>
+    <div class="stat"><div class="v">400</div><div class="l">Sentetik Müşteri</div></div>
+    <div class="stat"><div class="v">0</div><div class="l">Otomatik Onay</div></div>
+  </div>
+</div>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="sg"><div class="sg-t">Senaryo</div>
+    <a class="si" href="#scenario">🌍 Deprem Simülasyonu</a>
+    <a class="si" href="#kafka">📡 Kafka Olayları</a>
+  </div>
+  <div class="sg"><div class="sg-t">auth-service :8001</div>
+    <a class="si" href="#auth-register"><span class="mb mp">POST</span>/auth/register</a>
+    <a class="si" href="#auth-login"><span class="mb mp">POST</span>/auth/login</a>
+    <a class="si" href="#auth-me"><span class="mb mg">GET</span>/auth/me</a>
+  </div>
+  <div class="sg"><div class="sg-t">core-service :8002</div>
+    <a class="si" href="#core-customers"><span class="mb mg">GET</span>/customers</a>
+    <a class="si" href="#core-loan"><span class="mb mg">GET</span>/loans</a>
+  </div>
+  <div class="sg"><div class="sg-t">disaster-service :8003</div>
+    <a class="si" href="#dis-trigger"><span class="mb mp">POST</span>/disaster/trigger</a>
+    <a class="si" href="#dis-events"><span class="mb mg">GET</span>/disaster/events</a>
+    <a class="si" href="#dis-affected"><span class="mb mg">GET</span>/disaster/{id}/affected</a>
+  </div>
+  <div class="sg"><div class="sg-t">agent-service :8004</div>
+    <a class="si" href="#ag-run"><span class="mb mp">POST</span>/agent/run</a>
+    <a class="si" href="#ag-plans"><span class="mb mg">GET</span>/agent/plans</a>
+    <a class="si" href="#ag-approve"><span class="mb mp">POST</span>/plans/{id}/approve</a>
+    <a class="si" href="#ag-escalate"><span class="mb mp">POST</span>/plans/{id}/escalate</a>
+    <a class="si" href="#ag-sse"><span class="mb mg">GET</span>/agent/stream (SSE)</a>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- SCENARIO -->
+<div class="sec" id="scenario">
+  <div class="sec-hdr">
+    <div class="svc-icon" style="background:rgba(255,98,0,.12)">🌍</div>
+    <div><h2>Simüle Edilen Senaryo</h2><div class="desc">M7.4 Deprem — 3 örnek müşteri · Tamamen sentetik ve kurgusal veri</div></div>
+  </div>
+  <div class="wb">⚠️ <strong>Tüm veriler kurgusaldır.</strong> Gerçek AFAD verisi, gerçek müşteri bilgisi veya gerçek afet kaydı içermez. Bu sistem yalnızca prototip ve simülasyon amacıyla hazırlanmıştır.</div>
+  <div class="sc-card" style="margin-top:18px">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">🔴 Olay: M7.4 Deprem (Simülasyon)</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+      <div><div style="font-size:10px;color:var(--purple);margin-bottom:3px;font-family:'JetBrains Mono',monospace">OLAY</div><div style="font-weight:600">M7.4 Deprem</div></div>
+      <div><div style="font-size:10px;color:var(--purple);margin-bottom:3px;font-family:'JetBrains Mono',monospace">ZAMAN</div><div style="font-weight:600">16 Ekim 2026, 04:17</div></div>
+      <div><div style="font-size:10px;color:var(--purple);margin-bottom:3px;font-family:'JetBrains Mono',monospace">ETKİLENEN İLLER</div><div style="font-size:13px">Hatay · K.Maraş · Malatya · Adıyaman · Gaziantep</div></div>
+      <div><div style="font-size:10px;color:var(--purple);margin-bottom:3px;font-family:'JetBrains Mono',monospace">KAYNAK</div><div style="color:var(--red);font-weight:600">SİMÜLASYON</div></div>
+    </div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Toplu Sonuçlar — 400 Sentetik Müşteri</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div><span style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--ing)">258</span> <span style="font-size:11px;color:var(--t3)">Etkilenen</span></div>
+        <div><span style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--red)">76</span> <span style="font-size:11px;color:var(--t3)">Yüksek Öncelik</span></div>
+        <div><span style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--yellow)">46</span> <span style="font-size:11px;color:var(--t3)">DASK Görünmüyor</span></div>
+        <div><span style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green)">258</span> <span style="font-size:11px;color:var(--t3)">Onay Bekliyor</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-top:20px;margin-bottom:10px">3 Örnek Müşteri</div>
+  <div class="cg">
+    <div class="cc">
+      <div class="cn">👵 Hatice Hanım</div>
+      <div class="cr"><span>Yaş / İl</span><span class="v">72 · Antakya (Hatay)</span></div>
+      <div class="cr"><span>Kredi</span><span class="v">Konut, 14.500 TL/ay</span></div>
+      <div class="cr"><span>DASK</span><span class="v" style="color:var(--green)">Var</span></div>
+      <div class="cr"><span>Öncelik</span><span class="v" style="color:var(--red)">🔴 Yüksek (yaşlı)</span></div>
+      <div class="cr"><span>Erteleme</span><span class="v">4 ay (3+1)</span></div>
+      <div class="cr"><span>Ertelenen Taksit</span><span class="v">58.000 TL</span></div>
+      <div class="cr"><span>Dil</span><span class="v">Sade, yavaş, temsilci öne çıkar</span></div>
+    </div>
+    <div class="cc">
+      <div class="cn">👨 Emre Bey</div>
+      <div class="cr"><span>Yaş / İl</span><span class="v">34 · Elbistan (K.Maraş)</span></div>
+      <div class="cr"><span>Kredi</span><span class="v">İhtiyaç, 5.200 TL/ay</span></div>
+      <div class="cr"><span>DASK</span><span class="v" style="color:var(--t3)">Uygulanamaz</span></div>
+      <div class="cr"><span>Öncelik</span><span class="v" style="color:var(--yellow)">🟡 Normal</span></div>
+      <div class="cr"><span>Erteleme</span><span class="v">3 ay</span></div>
+      <div class="cr"><span>Ertelenen Taksit</span><span class="v">15.600 TL</span></div>
+      <div class="cr"><span>Dil</span><span class="v">Kısa ve net</span></div>
+    </div>
+    <div class="cc">
+      <div class="cn">👩 Selma Hanım</div>
+      <div class="cr"><span>Yaş / İl</span><span class="v">58 · Battalgazi (Malatya)</span></div>
+      <div class="cr"><span>Kredi</span><span class="v">Konut, 11.000 TL/ay</span></div>
+      <div class="cr"><span>DASK</span><span class="v" style="color:var(--yellow)">Görünmüyor</span></div>
+      <div class="cr"><span>Öncelik</span><span class="v" style="color:var(--yellow)">🟡 Normal</span></div>
+      <div class="cr"><span>Erteleme</span><span class="v">3 ay</span></div>
+      <div class="cr"><span>Ertelenen Taksit</span><span class="v">33.000 TL</span></div>
+      <div class="cr"><span>Dil</span><span class="v">Sade; DASK yönlendirme</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- KAFKA -->
+<div class="sec" id="kafka">
+  <div class="sec-hdr">
+    <div class="svc-icon" style="background:rgba(168,85,247,.12)">📡</div>
+    <div><h2>Kafka Olay Sözleşmeleri</h2><div class="desc">KRaft modu · Zookeeper gerektirmez · Yedek: Redis Streams (EventBus arayüzü)</div></div>
+  </div>
+  <div class="kc">
+    <div class="kt">disaster.declared</div>
+    <div class="km"><div class="kmi">Yayıncı:<span>disaster-service</span></div><div class="kmi">Dinleyen:<span>disaster-service, agent-service</span></div></div>
+    <div style="font-size:12px;color:var(--t2)">Yeni afet ilan edildi. agent-service dinleyerek ajan döngüsünü başlatır.</div>
+    <div class="cb">{ <span class="k">"event_id"</span>: <span class="s">"evt_001"</span>, <span class="k">"tur"</span>: <span class="s">"deprem"</span>, <span class="k">"buyukluk"</span>: <span class="n">7.4</span>, <span class="k">"iller"</span>: [<span class="s">"Hatay"</span>, <span class="s">"Kahramanmaraş"</span>], <span class="k">"zaman"</span>: <span class="s">"2026-10-16T04:17:00Z"</span> }</div>
+  </div>
+  <div class="kc">
+    <div class="kt">customer.affected</div>
+    <div class="km"><div class="kmi">Yayıncı:<span>disaster-service</span></div><div class="kmi">Dinleyen:<span>agent-service</span></div></div>
+    <div style="font-size:12px;color:var(--t2)">Bir müşteri afetten etkilenmiş sayıldı. Her müşteri için ayrı olay yayınlanır.</div>
+    <div class="cb">{ <span class="k">"event_id"</span>: <span class="s">"evt_001"</span>, <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span>, <span class="k">"il"</span>: <span class="s">"Hatay"</span>, <span class="k">"eslesme_zamani"</span>: <span class="s">"2026-10-16T04:18:02Z"</span> }</div>
+  </div>
+  <div class="kc">
+    <div class="kt">plan.drafted</div>
+    <div class="km"><div class="kmi">Yayıncı:<span>agent-service</span></div><div class="kmi">Dinleyen:<span>agent-service (SSE)</span></div></div>
+    <div style="font-size:12px;color:var(--t2)">Müşteri için plan taslağı ve bildirim hazır. SSE üzerinden ön yüze iletilir.</div>
+    <div class="cb">{ <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span>, <span class="k">"oncelik"</span>: <span class="s">"yuksek"</span>, <span class="k">"erteleme_ay"</span>: <span class="n">4</span>, <span class="k">"durum"</span>: <span class="s">"taslak"</span> }</div>
+  </div>
+  <div class="kc">
+    <div class="kt">plan.approved</div>
+    <div class="km"><div class="kmi">Yayıncı:<span>agent-service</span></div><div class="kmi">Dinleyen:<span>core-service</span></div></div>
+    <div style="font-size:12px;color:var(--t2)">Müşteri onayladı. Banka çalışanının incelemesine gider. <strong>Hiçbir şey otomatik onaylanmaz.</strong></div>
+  </div>
+  <div class="kc">
+    <div class="kt">plan.escalated</div>
+    <div class="km"><div class="kmi">Yayıncı:<span>agent-service</span></div><div class="kmi">Dinleyen:<span>çalışan konsolu</span></div></div>
+    <div style="font-size:12px;color:var(--t2)">Temsilciye devredildi. Ajan hata verdiyse veya müşteri "Temsilci beni arasın" diyip süresi dolduysa tetiklenir.</div>
+  </div>
+</div>
+
+<!-- AUTH SERVICE -->
+<div class="sec" id="auth-service">
+  <div class="sec-hdr">
+    <div class="svc-icon" style="background:rgba(34,197,94,.12)">🔐</div>
+    <div><h2>auth-service<span class="port">:8001</span></h2><div class="desc">Kayıt/giriş, JWT üretimi, RBAC (customer · staff · admin)</div></div>
+  </div>
+
+  <div class="ec" id="auth-register">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-post">POST</span><span class="ep">/auth/register</span>
+      <span class="es">Yeni kullanıcı kaydı</span>
+      <span class="ea ea-o">Public</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="lbl">Request Body</div>
+      <table class="pt"><thead><tr><th>Alan</th><th>Tür</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">email</td><td class="pty">string</td><td><span class="req">Zorunlu</span></td><td style="font-size:12px;color:var(--t2)">Geçerli e-posta adresi</td></tr>
+        <tr><td class="pn">password</td><td class="pty">string</td><td><span class="req">Zorunlu</span></td><td style="font-size:12px;color:var(--t2)">Min 8 karakter; bcrypt ile saklanır</td></tr>
+        <tr><td class="pn">role</td><td class="pty">enum</td><td><span class="opt">Opsiyonel</span></td><td style="font-size:12px;color:var(--t2)">customer | staff | admin (varsayılan: customer)</td></tr>
+        <tr><td class="pn">customer_id</td><td class="pty">string</td><td><span class="opt">Opsiyonel</span></td><td style="font-size:12px;color:var(--t2)">Müşteri rolü için core-service'deki müşteri ID'si</td></tr>
+      </tbody></table>
+      <div class="lbl">Örnek İstek</div>
+      <div class="cb">{ <span class="k">"email"</span>: <span class="s">"hatice@example.com"</span>, <span class="k">"password"</span>: <span class="s">"guvenli_sifre"</span>, <span class="k">"role"</span>: <span class="s">"customer"</span>, <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span> }</div>
+      <div class="lbl">Örnek Yanıt (201)</div>
+      <div class="cb">{ <span class="k">"user_id"</span>: <span class="s">"usr_001"</span>, <span class="k">"email"</span>: <span class="s">"hatice@example.com"</span>, <span class="k">"role"</span>: <span class="s">"customer"</span>, <span class="k">"created_at"</span>: <span class="s">"2026-10-16T05:00:00Z"</span> }</div>
+      <div class="lbl">Yanıt Kodları</div>
+      <div class="rl">
+        <div class="ri"><span class="sc s2">201</span>Kullanıcı başarıyla oluşturuldu</div>
+        <div class="ri"><span class="sc s409">409</span>Bu e-posta adresi zaten kayıtlı</div>
+        <div class="ri"><span class="sc s40">422</span>Geçersiz e-posta veya eksik alan</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ec" id="auth-login">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-post">POST</span><span class="ep">/auth/login</span>
+      <span class="es">JWT token al</span>
+      <span class="ea ea-o">Public</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="lbl">Örnek İstek</div>
+      <div class="cb">{ <span class="k">"email"</span>: <span class="s">"hatice@example.com"</span>, <span class="k">"password"</span>: <span class="s">"guvenli_sifre"</span> }</div>
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"access_token"</span>: <span class="s">"eyJhbGciOiJIUzI1NiJ9..."</span>, <span class="k">"token_type"</span>: <span class="s">"bearer"</span>, <span class="k">"expires_in"</span>: <span class="n">3600</span>, <span class="k">"role"</span>: <span class="s">"customer"</span> }</div>
+      <div class="lbl">Yanıt Kodları</div>
+      <div class="rl">
+        <div class="ri"><span class="sc s2">200</span>Token başarıyla verildi</div>
+        <div class="ri"><span class="sc s4">401</span>Hatalı e-posta veya şifre</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ec" id="auth-me">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-get">GET</span><span class="ep">/auth/me</span>
+      <span class="es">Oturum açık kullanıcı bilgisi</span>
+      <span class="ea ea-r">JWT Gerekli</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="ib">Header: <code>Authorization: Bearer {token}</code></div>
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"user_id"</span>: <span class="s">"usr_001"</span>, <span class="k">"email"</span>: <span class="s">"hatice@example.com"</span>, <span class="k">"role"</span>: <span class="s">"customer"</span>, <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span> }</div>
+      <div class="rl"><div class="ri"><span class="sc s2">200</span>Kullanıcı bilgisi döner</div><div class="ri"><span class="sc s4">401</span>Geçersiz veya süresi dolmuş token</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CORE SERVICE -->
+<div class="sec" id="core-service">
+  <div class="sec-hdr">
+    <div class="svc-icon" style="background:rgba(59,130,246,.12)">🏦</div>
+    <div><h2>core-service<span class="port">:8002</span></h2><div class="desc">Bankanın mock çekirdeği — müşteri, kredi, DASK bilgisi</div></div>
+  </div>
+
+  <div class="ec" id="core-customers">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-get">GET</span><span class="ep">/customers</span>
+      <span class="es">Müşteri listesi (sayfalı, filtreli)</span>
+      <span class="ea ea-r">staff · admin</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="lbl">Query Parametreleri</div>
+      <table class="pt"><thead><tr><th>Parametre</th><th>Tür</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">il</td><td class="pty">string</td><td style="font-size:12px;color:var(--t2)">İl filtresi (örn: Hatay)</td></tr>
+        <tr><td class="pn">hassas</td><td class="pty">boolean</td><td style="font-size:12px;color:var(--t2)">Yaşlı/engelli filtresi (true/false)</td></tr>
+        <tr><td class="pn">page</td><td class="pty">integer</td><td style="font-size:12px;color:var(--t2)">Sayfa numarası (varsayılan: 1)</td></tr>
+        <tr><td class="pn">size</td><td class="pty">integer</td><td style="font-size:12px;color:var(--t2)">Sayfa boyutu (varsayılan: 50, maks: 200)</td></tr>
+      </tbody></table>
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"total"</span>: <span class="n">400</span>, <span class="k">"page"</span>: <span class="n">1</span>, <span class="k">"items"</span>: [{ <span class="k">"id"</span>: <span class="s">"cust_072"</span>, <span class="k">"ad"</span>: <span class="s">"Hatice H."</span>, <span class="k">"il"</span>: <span class="s">"Hatay"</span>, <span class="k">"yas"</span>: <span class="n">72</span>, <span class="k">"hassas_durum"</span>: <span class="b">true</span> }] }</div>
+    </div>
+  </div>
+
+  <div class="ec" id="core-loan">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-get">GET</span><span class="ep">/loans</span>
+      <span class="es">Kredi listesi + DASK durumu</span>
+      <span class="ea ea-r">JWT Gerekli</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="lbl">Query Parametreleri</div>
+      <table class="pt"><thead><tr><th>Parametre</th><th>Tür</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">customer_id</td><td class="pty">string</td><td style="font-size:12px;color:var(--t2)">Müşteri ID'sine göre filtrele</td></tr>
+        <tr><td class="pn">tur</td><td class="pty">enum</td><td style="font-size:12px;color:var(--t2)">konut | ihtiyac | kart</td></tr>
+        <tr><td class="pn">dask_var</td><td class="pty">boolean</td><td style="font-size:12px;color:var(--t2)">DASK durumuna göre filtrele</td></tr>
+      </tbody></table>
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"total"</span>: <span class="n">258</span>, <span class="k">"items"</span>: [{ <span class="k">"id"</span>: <span class="s">"loan_001"</span>, <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span>, <span class="k">"tur"</span>: <span class="s">"konut"</span>, <span class="k">"kalan_borc"</span>: <span class="n">1250000</span>, <span class="k">"aylik_taksit"</span>: <span class="n">14500</span>, <span class="k">"dask_var"</span>: <span class="b">true</span>, <span class="k">"dask_police_no"</span>: <span class="s">"DASK-2024-001"</span> }] }</div>
+    </div>
+  </div>
+</div>
+
+<!-- DISASTER SERVICE -->
+<div class="sec" id="disaster-service">
+  <div class="sec-hdr">
+    <div class="svc-icon" style="background:rgba(239,68,68,.12)">🚨</div>
+    <div><h2>disaster-service<span class="port">:8003</span></h2><div class="desc">Afet olayı alma, etkilenen müşteri eşleme, Kafka'ya yayın</div></div>
+  </div>
+
+  <div class="ec" id="dis-trigger">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-post">POST</span><span class="ep">/disaster/trigger</span>
+      <span class="es">Afet simülasyonu başlat</span>
+      <span class="ea ea-r">admin</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="wb">⚠️ Yalnızca admin rolü bu uç noktaya erişebilir. Demo/simülasyon içindir. Gerçek sistemde AFAD/Kandilli akışı otomatik tetikler.</div>
+      <div class="lbl">Request Body</div>
+      <table class="pt"><thead><tr><th>Alan</th><th>Tür</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">tur</td><td class="pty">string</td><td><span class="req">Zorunlu</span></td><td style="font-size:12px;color:var(--t2)">deprem | sel | yangin</td></tr>
+        <tr><td class="pn">buyukluk</td><td class="pty">float</td><td><span class="req">Zorunlu</span></td><td style="font-size:12px;color:var(--t2)">Richter ölçeği (örn: 7.4)</td></tr>
+        <tr><td class="pn">iller</td><td class="pty">string[]</td><td><span class="req">Zorunlu</span></td><td style="font-size:12px;color:var(--t2)">Etkilenen iller listesi</td></tr>
+        <tr><td class="pn">zaman</td><td class="pty">datetime</td><td><span class="opt">Opsiyonel</span></td><td style="font-size:12px;color:var(--t2)">ISO 8601 (varsayılan: şu an)</td></tr>
+        <tr><td class="pn">kaynak</td><td class="pty">string</td><td><span class="opt">Opsiyonel</span></td><td style="font-size:12px;color:var(--t2)">varsayılan: "SIMULASYON"</td></tr>
+      </tbody></table>
+      <div class="lbl">Örnek İstek — Hatice Hanım Senaryosu</div>
+      <div class="cb">{ <span class="k">"tur"</span>: <span class="s">"deprem"</span>, <span class="k">"buyukluk"</span>: <span class="n">7.4</span>, <span class="k">"iller"</span>: [<span class="s">"Hatay"</span>, <span class="s">"Kahramanmaraş"</span>, <span class="s">"Malatya"</span>, <span class="s">"Adıyaman"</span>, <span class="s">"Gaziantep"</span>], <span class="k">"zaman"</span>: <span class="s">"2026-10-16T04:17:00Z"</span> }</div>
+      <div class="lbl">Örnek Yanıt (201)</div>
+      <div class="cb">{ <span class="k">"event_id"</span>: <span class="s">"evt_001"</span>, <span class="k">"etkilenen_musteri_sayisi"</span>: <span class="n">258</span>, <span class="k">"yuksek_oncelikli"</span>: <span class="n">76</span>, <span class="k">"kafka_yayinlandi"</span>: <span class="b">true</span>, <span class="k">"mesaj"</span>: <span class="s">"Afet bildirimi islendi, ajan sistemi baslatildi."</span> }</div>
+      <div class="rl">
+        <div class="ri"><span class="sc s2">201</span>Afet oluşturuldu, Kafka'ya yayınlandı</div>
+        <div class="ri"><span class="sc s4">403</span>admin yetkisi gerekli</div>
+        <div class="ri"><span class="sc s40">422</span>Geçersiz alan veya eksik veri</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ec" id="dis-events">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-get">GET</span><span class="ep">/disaster/events</span>
+      <span class="es">Tüm afet olayları</span>
+      <span class="ea ea-r">staff · admin</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"total"</span>: <span class="n">1</span>, <span class="k">"items"</span>: [{ <span class="k">"id"</span>: <span class="s">"evt_001"</span>, <span class="k">"tur"</span>: <span class="s">"deprem"</span>, <span class="k">"buyukluk"</span>: <span class="n">7.4</span>, <span class="k">"iller"</span>: [<span class="s">"Hatay"</span>, <span class="s">"Kahramanmaraş"</span>], <span class="k">"etkilenen_sayisi"</span>: <span class="n">258</span> }] }</div>
+    </div>
+  </div>
+
+  <div class="ec" id="dis-affected">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-get">GET</span><span class="ep">/disaster/{event_id}/affected</span>
+      <span class="es">Etkilenen müşteriler (öncelik sırasında)</span>
+      <span class="ea ea-r">staff · admin</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"event_id"</span>: <span class="s">"evt_001"</span>, <span class="k">"total"</span>: <span class="n">258</span>, <span class="k">"items"</span>: [{ <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span>, <span class="k">"oncelik"</span>: <span class="s">"yuksek"</span>, <span class="k">"il"</span>: <span class="s">"Hatay"</span>, <span class="k">"yas"</span>: <span class="n">72</span>, <span class="k">"hassas"</span>: <span class="b">true</span> }] }</div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENT SERVICE -->
+<div class="sec" id="agent-service">
+  <div class="sec-hdr">
+    <div class="svc-icon" style="background:rgba(168,85,247,.12)">🤖</div>
+    <div><h2>agent-service<span class="port">:8004</span></h2><div class="desc">Ajan A (Planlayıcı) + Ajan B (İletişimci) · planlar · onay akışı · SSE canlı bildirim</div></div>
+  </div>
+
+  <div class="ec" id="ag-run">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-post">POST</span><span class="ep">/agent/run</span>
+      <span class="es">Belirli müşteri için ajan döngüsünü başlat</span>
+      <span class="ea ea-r">admin · staff</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="ib">Normalde Kafka <code>customer.affected</code> olayı ile otomatik tetiklenir. Bu uç nokta test ve yeniden çalıştırma içindir.</div>
+      <div class="lbl">Request Body</div>
+      <table class="pt"><thead><tr><th>Alan</th><th>Tür</th><th>Durum</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">customer_id</td><td class="pty">string</td><td><span class="req">Zorunlu</span></td><td style="font-size:12px;color:var(--t2)">İşlenecek müşteri ID'si</td></tr>
+        <tr><td class="pn">event_id</td><td class="pty">string</td><td><span class="req">Zorunlu</span></td><td style="font-size:12px;color:var(--t2)">İlgili afet olay ID'si</td></tr>
+      </tbody></table>
+      <div class="lbl">Örnek İstek</div>
+      <div class="cb">{ <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span>, <span class="k">"event_id"</span>: <span class="s">"evt_001"</span> }</div>
+      <div class="lbl">Örnek Yanıt (201) — Hatice Hanım Planı</div>
+      <div class="cb">{ <span class="k">"run_id"</span>: <span class="s">"run_001"</span>, <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span>, <span class="k">"oncelik"</span>: <span class="s">"yuksek"</span>, <span class="k">"erteleme_ay"</span>: <span class="n">4</span>, <span class="k">"belgeler"</span>: [<span class="s">"kimlik"</span>, <span class="s">"hasar_tespit"</span>, <span class="s">"tapu"</span>, <span class="s">"dask_police_no"</span>], <span class="k">"mesaj"</span>: <span class="s">"Sayın Hatice Hanım, geçmiş olsun..."</span>, <span class="k">"adim_sayisi"</span>: <span class="n">6</span>, <span class="k">"sure_ms"</span>: <span class="n">3240</span>, <span class="k">"durum"</span>: <span class="s">"taslak"</span> }</div>
+    </div>
+  </div>
+
+  <div class="ec" id="ag-plans">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-get">GET</span><span class="ep">/agent/plans</span>
+      <span class="es">Tüm planlar (filtreli, sayfalı) + ajan adım detayları</span>
+      <span class="ea ea-r">JWT Gerekli</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="lbl">Query Parametreleri</div>
+      <table class="pt"><thead><tr><th>Parametre</th><th>Tür</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">event_id</td><td class="pty">string</td><td style="font-size:12px;color:var(--t2)">Afet olay ID'si filtresi</td></tr>
+        <tr><td class="pn">customer_id</td><td class="pty">string</td><td style="font-size:12px;color:var(--t2)">Müşteri ID'si filtresi (müşteri portalı için)</td></tr>
+        <tr><td class="pn">durum</td><td class="pty">enum</td><td style="font-size:12px;color:var(--t2)">taslak | onaylandi | devredildi | iptal</td></tr>
+        <tr><td class="pn">oncelik</td><td class="pty">enum</td><td style="font-size:12px;color:var(--t2)">yuksek | normal</td></tr>
+      </tbody></table>
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"oncelik"</span>: <span class="s">"yuksek"</span>, <span class="k">"erteleme_ay"</span>: <span class="n">4</span>, <span class="k">"durum"</span>: <span class="s">"taslak"</span>, <span class="k">"adimlar"</span>: [{ <span class="k">"adim"</span>: <span class="n">1</span>, <span class="k">"arac"</span>: <span class="s">"musteri_bilgisi_getir"</span>, <span class="k">"sure_ms"</span>: <span class="n">120</span> }, { <span class="k">"adim"</span>: <span class="n">2</span>, <span class="k">"arac"</span>: <span class="s">"oncelik_belirle"</span>, <span class="k">"cikti"</span>: <span class="s">"yuksek"</span> }, { <span class="k">"adim"</span>: <span class="n">3</span>, <span class="k">"arac"</span>: <span class="s">"belge_listesi_getir"</span> }, { <span class="k">"adim"</span>: <span class="n">4</span>, <span class="k">"arac"</span>: <span class="s">"erteleme_taslagi_olustur"</span>, <span class="k">"cikti"</span>: <span class="s">"4 ay"</span> }] }</div>
+    </div>
+  </div>
+
+  <div class="ec" id="ag-approve">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-post">POST</span><span class="ep">/agent/plans/{plan_id}/approve</span>
+      <span class="es">Müşteri planı onaylar</span>
+      <span class="ea ea-r">customer</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="wb">🔐 <strong>Hiçbir erteleme otomatik gerçekleşmez.</strong> Müşteri onayından sonra plan banka çalışanının kontrol kuyruğuna girer. Karar insandadır.</div>
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"durum"</span>: <span class="s">"onaylandi"</span>, <span class="k">"onay_zamani"</span>: <span class="s">"2026-10-16T07:42:13Z"</span>, <span class="k">"mesaj"</span>: <span class="s">"Talebiniz degerlendirme icin banka calisanina iletildi."</span> }</div>
+      <div class="rl">
+        <div class="ri"><span class="sc s2">200</span>Plan onaylandı, çalışan kuyruğuna gönderildi</div>
+        <div class="ri"><span class="sc s4">403</span>Yalnızca planın sahibi müşteri onaylayabilir</div>
+        <div class="ri"><span class="sc s409">409</span>Plan zaten onaylanmış veya devredilmiş</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ec" id="ag-escalate">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-post">POST</span><span class="ep">/agent/plans/{plan_id}/escalate</span>
+      <span class="es">Temsilciye devret (müşteri talebi veya ajan hatası)</span>
+      <span class="ea ea-r">customer · ajan (oto)</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="ib">Müşteri "Temsilci beni arasın" dediğinde veya ajan hata verdiğinde otomatik tetiklenir. Müşteri asla sahipsiz kalmaz.</div>
+      <div class="lbl">Request Body (opsiyonel)</div>
+      <table class="pt"><thead><tr><th>Alan</th><th>Tür</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">neden</td><td class="pty">string</td><td style="font-size:12px;color:var(--t2)">musteri_talebi | ajan_hatasi | sure_asimi</td></tr>
+      </tbody></table>
+      <div class="lbl">Örnek Yanıt (200)</div>
+      <div class="cb">{ <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"durum"</span>: <span class="s">"devredildi"</span>, <span class="k">"neden"</span>: <span class="s">"musteri_talebi"</span>, <span class="k">"mesaj"</span>: <span class="s">"Temsilcimiz en kisa surede sizi arayacaktir."</span> }</div>
+    </div>
+  </div>
+
+  <div class="ec" id="ag-sse">
+    <div class="eh" onclick="toggle(this)">
+      <span class="em em-get">GET</span><span class="ep">/agent/stream</span>
+      <span class="es">SSE — Canlı plan akışı (Redis üzerinden dağıtılır)</span>
+      <span class="ea ea-r">JWT Gerekli</span><span class="ei">▶</span>
+    </div>
+    <div class="eb">
+      <div class="ib">Server-Sent Events bağlantısı. Next.js ön yüzü bu akışı dinleyerek çalışan konsolunu ve müşteri bildirim ekranını gerçek zamanlı günceller.</div>
+      <div class="lbl">Query Parametresi</div>
+      <table class="pt"><thead><tr><th>Parametre</th><th>Tür</th><th>Açıklama</th></tr></thead><tbody>
+        <tr><td class="pn">event_id</td><td class="pty">string</td><td style="font-size:12px;color:var(--t2)">Belirli afet olayını filtrele (opsiyonel)</td></tr>
+      </tbody></table>
+      <div class="lbl">SSE Olay Örnekleri</div>
+      <div class="cb"><span class="c">// plan.drafted</span>
+data: { <span class="k">"type"</span>: <span class="s">"plan.drafted"</span>, <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"customer_id"</span>: <span class="s">"cust_072"</span>, <span class="k">"oncelik"</span>: <span class="s">"yuksek"</span> }
+
+<span class="c">// plan.approved</span>
+data: { <span class="k">"type"</span>: <span class="s">"plan.approved"</span>, <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"onay_zamani"</span>: <span class="s">"2026-10-16T07:42:13Z"</span> }
+
+<span class="c">// plan.escalated</span>
+data: { <span class="k">"type"</span>: <span class="s">"plan.escalated"</span>, <span class="k">"plan_id"</span>: <span class="s">"plan_001"</span>, <span class="k">"neden"</span>: <span class="s">"musteri_talebi"</span> }</div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<footer>
+  Sentetik veri ile hazırlanmış prototip &nbsp;·&nbsp; ING Hubs Türkiye Agentic AI Hackathon 2026 &nbsp;·&nbsp; <strong style="color:var(--ing)">Afet Modu</strong>
+</footer>
+
+<script>
+function toggle(hdr){hdr.parentElement.classList.toggle('open')}
+const obs=new IntersectionObserver(e=>e.forEach(en=>{if(en.isIntersecting){document.querySelectorAll('.si').forEach(s=>{s.classList.remove('active');if(s.getAttribute('href')==='#'+en.target.id)s.classList.add('active')})}}),{threshold:.3});
+document.querySelectorAll('[id]').forEach(s=>obs.observe(s));
+</script>
+</body>
+</html>
