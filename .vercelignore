@@ -1,0 +1,12 @@
+# Python dosyaları ve servisleri (Vercel python-analysis hatasını önler)
+*.py
+*.pyc
+__pycache__/
+afet-modu/
+afet_db.sqlite*
+*.bat
+*.ps1
+*.pdf
+node_modules/
+dist/
+.git/

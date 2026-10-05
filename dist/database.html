@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostgreSQL 16 — Veritabanı Konsolu (afet DB & Jüri İnceleme)</title>
+  <!-- Liman Bankası (LB) Sekme Amblemi -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='lb-grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23FF7A1A'/%3E%3Cstop offset='100%25' stop-color='%23D95300'/%3E%3C/defs%3E%3ClinearGradient id='bg-grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%231A202C'/%3E%3Cstop offset='100%25' stop-color='%230B0D13'/%3E%3C/defs%3E%3Crect x='2' y='2' width='60' height='60' rx='14' fill='url(%23bg-grad)' stroke='%23D95300' stroke-width='2.5'/%3E%3Cpath d='M16 48 C 24 45, 40 45, 48 48' stroke='%23D95300' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.8'/%3E%3Ccircle cx='32' cy='14' r='3.5' fill='%23FF7A1A'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif' font-weight='900' font-size='24' letter-spacing='1'%3E%3Ctspan fill='%23FFFFFF'%3EL%3C/tspan%3E%3Ctspan fill='url(%23lb-grad)'%3EB%3C/tspan%3E%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- BEYAZ DÜZ POSTGRESQL VERİTABANI ARAYÜZÜ -->
+  <link rel="stylesheet" href="css/database-white.css" />
+</head>
+<body>
+
+  <!-- 1. ÜST POSTGRESQL BAĞLANTI BARI -->
+  <header class="pg-navbar">
+    <div class="pg-brand">
+      <div class="pg-logo-badge">🐘</div>
+      <div class="pg-conn-info">
+        <div class="pg-title">
+          <span>PostgreSQL 16 — Veritabanı: <strong>afet</strong></span>
+          <span style="font-size:11px;background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;padding:2px 7px;border-radius:4px;display:flex;align-items:center;gap:4px">
+            ● DB: BAĞLI (Port 5432)
+          </span>
+          <span id="api-conn-indicator" style="font-size:11px;background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;padding:2px 7px;border-radius:4px;display:flex;align-items:center;gap:4px">
+            ● 🟢 API: AKTİF (:8000)
+          </span>
+        </div>
+        <div class="pg-uri">
+          postgresql://afet:••••••••@localhost:5432/afet &nbsp;·&nbsp; FastAPI API Servisi: <code>http://localhost:8000</code>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn-pg btn-pg-primary" onclick="executeQuery()">
+        ▶ SQL Çalıştır (F5)
+      </button>
+      <button class="btn-pg" style="background:#F0FDF4;color:#166534;border-color:#BBF7D0;font-weight:600" onclick="onRemoteUpdateReceived('Manuel Yenileme')" title="Veritabanını ve son kayıtları anında yenile">
+        🔄 Verileri Yenile
+      </button>
+      <button class="btn-pg" onclick="window.location.href='afet-modu-app.html'">
+        📱 Bankacılık Uygulaması ↗
+      </button>
+      <button class="btn-pg" style="color:#DC2626" onclick="LimanDB.resetDatabase()" title="Veritabanını sıfırla">
+        ⚠️ Sıfırla (Seed)
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. ANA VERİTABANI DÜZENİ (SOL: AĞAÇ / SAĞ: SQL VE TABLO) -->
+  <div class="pg-layout">
+
+    <!-- SOL PANEL: ŞEMA VE TABLOLAR AĞACI -->
+    <aside class="pg-sidebar">
+      <div class="sidebar-hdr">
+        <span>📁 Veritabanı Şemaları</span>
+        <span style="font-size:10px;color:#94A3B8">5 Tablo</span>
+      </div>
+
+      <ul class="tree-list">
+        <!-- CORE ŞEMASI -->
+        <li class="tree-group-title">
+          <span>▼</span> Şema: core
+        </li>
+        <li class="tree-item active" id="tree-core-customers" onclick="selectTable('core.customers')">
+          <span>📄 customers</span>
+          <span class="tree-badge" id="count-core-customers">8</span>
+        </li>
+        <li class="tree-item" id="tree-core-loans" onclick="selectTable('core.loans')">
+          <span>📄 loans</span>
+          <span class="tree-badge" id="count-core-loans">8</span>
+        </li>
+
+        <!-- AGENT ŞEMASI -->
+        <li class="tree-group-title" style="margin-top:14px">
+          <span>▼</span> Şema: agent
+        </li>
+        <li class="tree-item" id="tree-agent-plans" onclick="selectTable('agent.plans')">
+          <span>📄 plans</span>
+          <span class="tree-badge" id="count-agent-plans">8</span>
+        </li>
+
+        <!-- DISASTER ŞEMASI -->
+        <li class="tree-group-title" style="margin-top:14px">
+          <span>▼</span> Şema: disaster
+        </li>
+        <li class="tree-item" id="tree-disaster-events" onclick="selectTable('disaster.events')">
+          <span>📄 events</span>
+          <span class="tree-badge">2</span>
+        </li>
+
+        <!-- AUDIT ŞEMASI -->
+        <li class="tree-group-title" style="margin-top:14px">
+          <span>▼</span> Şema: audit
+        </li>
+        <li class="tree-item" id="tree-audit-logs" onclick="selectTable('audit.logs')">
+          <span>📄 logs</span>
+          <span class="tree-badge" id="count-audit-logs">4</span>
+        </li>
+      </ul>
+
+      <div style="margin-top:auto;padding:16px;border-top:1px solid var(--border);background:#F8FAFC;font-size:11.5px;color:#64748B;line-height:1.5">
+        <strong style="color:#0F172A">Jüri Bilgilendirmesi:</strong><br>
+        <code>afet-modu-app.html</code> üzerinde yeni müşteri kaydı veya kredi onayı yapıldığında, ilgili PostgreSQL tablosuna anında gerçek satır eklenir.
+      </div>
+    </aside>
+
+    <!-- SAĞ PANEL: SQL QUERY EDİTÖRÜ VE GERÇEK VERİ TABLOSU -->
+    <main class="pg-main">
+
+      <!-- SQL QUERY ÇUBUĞU -->
+      <div class="sql-query-bar">
+        <!-- HIZLI JÜRİ SORGULARI (SQL PRESETS) -->
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;color:#64748B;margin-bottom:4px">
+          <strong style="color:#0F172A">Örnek SQL:</strong>
+          <button class="sql-chip" onclick="setSqlQuery('SELECT * FROM core.customers ORDER BY created_at DESC;')">core.customers (Tümü)</button>
+          <button class="sql-chip" onclick="setSqlQuery('SELECT * FROM core.customers WHERE kredi_durumu = \'ONAYLANDI\';')">✓ Onaylanan Krediler</button>
+          <button class="sql-chip" onclick="setSqlQuery('SELECT * FROM core.customers WHERE yas >= 65;')">65+ Yaş Afetzedeler</button>
+          <button class="sql-chip" onclick="setSqlQuery('SELECT * FROM core.customers WHERE il = \'Hatay\';')">Hatay Afetzedeleri</button>
+          <button class="sql-chip" onclick="setSqlQuery('SELECT * FROM core.customers WHERE il = \'Rize\';')">Rize Selzedeleri</button>
+          <button class="sql-chip" onclick="setSqlQuery('SELECT * FROM agent.plans WHERE onaylandi_mi = true;')">agent.plans (Onaylananlar)</button>
+          <button class="sql-chip" onclick="setSqlQuery('SELECT * FROM core.loans WHERE tur = \'konut\';')">Konut Kredileri</button>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center">
+          <input 
+            type="text" 
+            id="sql-query-display" 
+            class="sql-query-input" 
+            value="SELECT * FROM core.customers ORDER BY created_at DESC;" 
+            onkeydown="if(event.key==='Enter') executeQuery()" 
+            placeholder="SQL Sorgusu yazın... (Örn: SELECT * FROM core.customers WHERE yas >= 65;)"
+          />
+          <button class="btn-pg btn-pg-primary" style="padding:9px 18px;font-weight:600;white-space:nowrap" onclick="executeQuery()">
+            ▶ Çalıştır (F5)
+          </button>
+        </div>
+
+        <!-- HATA KUTUSU (GEÇERSİZ SORGU / TABLO BULUNAMADIĞINDA) -->
+        <div id="sql-error-box" style="display:none;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:4px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#991B1B">
+        </div>
+
+        <div class="sql-meta-bar">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span id="query-status-badge" style="color:#059669;font-weight:600">✓ Status: 200 OK</span>
+            <span>Execution: <strong id="query-execution-time" style="color:#0F172A">3.2 ms</strong></span>
+            <span>Total: <strong id="query-row-count" style="color:#0F172A">8 rows</strong></span>
+          </div>
+
+          <div>
+            <input 
+              type="text" 
+              placeholder="🔍 Tabloda anlık ara..." 
+              style="padding:5px 10px;font-size:12px;border:1px solid #CBD5E1;border-radius:4px;outline:none;width:180px" 
+              oninput="filterGrid(this.value)" 
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- CANLI İŞLEM TOAST BİLGİLENDİRMESİ -->
+      <div id="live-banner" class="live-insert-banner" style="display:none">
+        <div id="live-banner-text">
+          ⚡ <strong>CANLI SENKRONİZASYON:</strong> afet-modu-app.html üzerinden yeni işlem yapıldı.
+        </div>
+        <span style="font-size:11px;opacity:0.85">Az Önce İşlendi</span>
+      </div>
+
+      <!-- VERİ TABLOSU (DATA GRID) -->
+      <div class="grid-container">
+        <table class="pg-table">
+          <thead id="grid-thead">
+            <!-- Dinamik doldurulur -->
+          </thead>
+          <tbody id="grid-tbody">
+            <!-- Dinamik doldurulur -->
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Veri Katmanı ve PostgreSQL Veritabanı Konsolu Motoru -->
+  <script src="js/api-client.js?v=2.6"></script>
+  <script src="js/data.js?v=2.6"></script>
+  <script src="js/database.js?v=2.6"></script>
+</body>
+</html>

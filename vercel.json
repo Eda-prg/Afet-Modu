@@ -1,38 +1,12 @@
 {
-  "version": 2,
-  "name": "afet-modu-sistemi",
-  "cleanUrls": true,
-  "headers": [
+  "rewrites": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
-    }
-  ],
-  "routes": [
-    {
-      "src": "/",
-      "dest": "/index.html"
+      "source": "/afet-modu-app",
+      "destination": "/index.html"
     },
     {
-      "src": "/afet-modu-app.html",
-      "dest": "/index.html"
-    },
-    {
-      "src": "/database.html",
-      "dest": "/database.html"
-    },
-    {
-      "src": "/api-docs.html",
-      "dest": "/api-docs.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/afet-modu-app.html",
+      "destination": "/index.html"
     }
   ]
 }
