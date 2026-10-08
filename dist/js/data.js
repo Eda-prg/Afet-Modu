@@ -23,7 +23,7 @@
           { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 72, "hassas_durum": true}', out: '{"oncelik": "YUKSEK", "kural": "yas >= 65"}', ms: 42, desc: '65 yaş üstü kuralı işletildi → Yüksek Öncelik verildi.' },
           { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "oncelik": "yuksek"}', out: '{"erteleme_ay": 4, "kural": "konut_3 + hassasiyet_1", "kod_ust_sinir": 6}', ms: 80, desc: '3 ay temel + 1 ay hassasiyet desteği hesaplandı; 6 ay üst sınır kontrolü geçti.' },
           { tool: 'belge_listesi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "dask": true}', out: '["kimlik", "hasar_tespit", "tapu", "dask_police_no"]', ms: 48, desc: 'DASK poliçesi mevcut olduğundan poliçe numarası şablona eklendi.' },
-          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"model": "openai/gpt-4o-mini", "ton": "sakin, saygili"}', out: '"Sayın Hatice Hanım, geçmiş olsun. Konut krediniz için 4 aylık erteleme talebiniz değerlendirmeye alınmak üzere hazırlandı..."', ms: 1240, desc: 'Sakin ve saygılı dil filtresinden geçirildi. Ticari kelimeler ve kesin vaatler elendi.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"model": "openai/gpt-4o-mini", "ton": "sakin, saygili"}', out: '"Sayın Hatice Hanım, geçmiş olsun. Konut krediniz için 4 aylık erteleme talebiniz değerlendirmeye alınmak üzere hazırlandı..."', ms: 1240, desc: 'Sakin ve saygılı dil filtresinden geçirildi. Ticari ve bağlayıcı vaat ifadeleri elendi.' },
           { tool: 'sohbet_baglam_yukle', agent: 'Ajan C (Sohbet Ajanı)', in: '{"customer_id": "cust_hatice_001", "plan": "4_ay_konut", "dask": "DASK-2022-HY-001"}', out: '{"status": "CONTEXT_READY", "memory_injected": true}', ms: 35, desc: 'Hatice Hanım\'ın kredi, DASK ve 4 aylık plan bağlamı Ajan C sohbet oturumuna sıfır sorguyla yüklendi.' }
         ]
       },
@@ -125,7 +125,7 @@
         steps: [
           { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_rize_002"}', out: '{"ad": "Fadime", "yas": 71, "kredi": "konut", "aylik": 12400, "dask": true}', ms: 78, desc: 'Müşteri konut kredisi ve aktif DASK kaydı doğrulandı.' },
           { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 71}', out: '{"oncelik": "YUKSEK"}', ms: 30, desc: '71 yaş sebebiyle Yüksek Öncelik atandı.' },
-          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "oncelik": "yuksek"}', out: '{"erteleme_ay": 4, "kod_ust_sinir": 6}', ms: 65, desc: '4 ay faizsiz öteleme taslağı bağlandı.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "oncelik": "yuksek"}', out: '{"erteleme_ay": 4, "kod_ust_sinir": 6}', ms: 65, desc: '4 ay öteleme taslağı bağlandı (politika tavan sınırı: 6 ay).' },
           { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "sakin_guvenli"}', out: '"Sayın Fadime Hanım, geçmiş olsun..."', ms: 980, desc: 'Duyarlı ve sakin tonlu metin üretildi.' }
         ]
       },
@@ -223,7 +223,7 @@
           period: '4 Ay',
           status: 'ONAYLANDI',
           channel: 'Liman Mobil (Ajan C Destekli)',
-          note: '0% faiz ile 4 aylık erteleme müşterinin doğrudan mobil onayıyla kesinleşti.'
+          note: '4 aylık vade sonu erteleme talebi müşterinin doğrudan mobil onayıyla tamamlandı.'
         },
         {
           id: 'TX-2026-002',

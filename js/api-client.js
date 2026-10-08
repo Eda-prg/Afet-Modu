@@ -57,11 +57,11 @@
       if (pill) {
         if (online) {
           pill.className = 'api-status-pill online';
-          pill.innerHTML = `● 🟢 API: BAĞLI (:8000 · SSE Canlı)`;
+          pill.innerHTML = `<span class="status-dot online"></span><span>API</span>`;
           pill.title = `FastAPI servisi aktif (${apiBase}) · Canlı veri akışı açık.`;
         } else {
           pill.className = 'api-status-pill offline';
-          pill.innerHTML = `● ⚪ API: ÇEVRİMDIŞI (Yerel Mod)`;
+          pill.innerHTML = `<span class="status-dot"></span><span>API</span>`;
           pill.title = `FastAPI bağlantısı kurulamadı. Uygulama yerel bellek ile çalışıyor.`;
         }
       }
@@ -153,6 +153,16 @@
         if (typeof window.showToast === 'function') {
           window.showToast(`🚨 AFET İLANI: ${data.tur || 'Afet'} bildirimi sisteme düştü!`);
         }
+        if (typeof window.setDisasterMode === 'function' && !window.isDisasterActive) {
+          window.setDisasterMode(true, { showAlert: true });
+        }
+        if (typeof window.showSmsNotification === 'function') {
+          window.showSmsNotification();
+        }
+      } else if (topic === 'sms.dispatched') {
+        if (typeof window.showSmsNotification === 'function') {
+          window.showSmsNotification();
+        }
       } else if (topic === 'customer.registered' && data.customer_id) {
         // Yeni müşteri kaydoldu, listeye ekle
         if (typeof window.fetchCustomersFromAPI === 'function') {
@@ -195,6 +205,25 @@
         return await res.json();
       } catch (e) {
         console.error('[LimanAPI] register error:', e);
+        return null;
+      }
+    },
+
+    async registerStaff(staffData) {
+      if (!isApiOnline) {
+        console.warn('[LimanAPI] API çevrimdışı, çalışan kaydı yerel mod.');
+        return null;
+      }
+      try {
+        const res = await fetch(`${apiBase}/api/auth/register-staff`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(staffData)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        console.error('[LimanAPI] registerStaff error:', e);
         return null;
       }
     },

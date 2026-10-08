@@ -1,17 +1,33 @@
 @echo off
 chcp 65001 >nul
-title Afet Modu - Vercel Canlıya Alma (Production Deploy)
+title Afet Modu - Vercel Canliya Alma
+color 0b
+
 echo ==========================================================
-echo        AFET MODU SİSTEMİ - VERCEL İLE CANLIYA ALMA
+echo        AFET MODU SISTEMI - VERCEL ILE CANLIYA ALMA
 echo ==========================================================
 echo.
-echo 1) Vercel CLI başlatılıyor...
-echo 2) İlk kez çalıştırıyorsanız tarayıcınızda Vercel onay ekranı açılacaktır.
-echo 3) Onayladıktan sonra birkaç saniye içinde "https://...vercel.app" linkiniz hazır olacak!
+echo ADIM 1: Vercel hesabiniza giris yapiliyor...
+echo Tarayiciniz acilacak, GitHub veya Google ile giris yapin.
+echo Giris tamamlandiktan sonra bu pencereye geri donun.
 echo.
-npx vercel --prod
+call npx -y vercel login
 echo.
-echo ==========================================================
-echo Canlıya alma işlemi tamamlandı. Yukarıdaki linkten projenizi açabilirsiniz!
-echo ==========================================================
+echo ----------------------------------------------------------
+echo ADIM 2: Proje canliya yukleniyor...
+echo ----------------------------------------------------------
+echo.
+call npx -y vercel deploy dist --prod --yes
+echo.
+if %ERRORLEVEL% EQU 0 (
+    echo ==========================================================
+    echo [BASARILI] Projeniz canliya alindi!
+    echo Yukaridaki Production linkini tarayicinizda acin.
+    echo ==========================================================
+) else (
+    echo ==========================================================
+    echo [HATA] Deploy basarisiz. Tekrar deneyin.
+    echo ==========================================================
+)
+echo.
 pause

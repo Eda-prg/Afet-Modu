@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="lb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7A1A"/>
+      <stop offset="100%" stop-color="#D95300"/>
+    </linearGradient>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1A202C"/>
+      <stop offset="100%" stop-color="#0B0D13"/>
+    </linearGradient>
+  </defs>
+  <!-- Arka plan yuvarlatılmış kare (Liman Bankası zemin) -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg-grad)" stroke="#D95300" stroke-width="2.5"/>
+  <!-- Güvenlik & Afet Destek dalga hattı -->
+  <path d="M16 48 C 24 45, 40 45, 48 48" stroke="#D95300" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.8"/>
+  <!-- Liman Feneri / Afet Sinyal Noktası -->
+  <circle cx="32" cy="14" r="3.5" fill="#FF7A1A"/>
+  <!-- LB Amblem Monogramı -->
+  <text x="32" y="39" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-weight="900" font-size="24" letter-spacing="1">
+    <tspan fill="#FFFFFF">L</tspan><tspan fill="url(#lb-grad)">B</tspan>
+  </text>
+</svg>

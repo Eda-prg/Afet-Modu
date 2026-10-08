@@ -1,0 +1,12 @@
+-- Afet Modu - PostgreSQL Şema Başlatma
+-- Servis başına ayrı şema
+
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE SCHEMA IF NOT EXISTS core;
+CREATE SCHEMA IF NOT EXISTS disaster;
+CREATE SCHEMA IF NOT EXISTS agent;
+CREATE SCHEMA IF NOT EXISTS audit;
+
+-- Uzantılar
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";

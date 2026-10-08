@@ -1,0 +1,111 @@
+/* Afet Modu — Global Styles
+   ING turuncu (#FF6200) tabanı, dark mode, sakin & saygılı ton */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --ing: #FF6200;
+  --ing-d: #E05500;
+  --ing-light: rgba(255, 98, 0, 0.1);
+  --ing-border: rgba(255, 98, 0, 0.3);
+  --bg: #0A0C10;
+  --bg-card: #111318;
+  --bg-hover: #1A1E28;
+  --border: rgba(255, 255, 255, 0.07);
+  --t1: #F1F3F7;
+  --t2: #8B9AB1;
+  --t3: #4A5568;
+  --green: #22C55E;
+  --red: #EF4444;
+  --yellow: #EAB308;
+  --blue: #3B82F6;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--t1);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Kartlar */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+/* Butonlar */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--ing);
+  color: white;
+}
+.btn-primary:hover { background: var(--ing-d); transform: translateY(-1px); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--t2);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { background: var(--bg-hover); color: var(--t1); }
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid;
+}
+.badge-high { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+.badge-normal { color: var(--yellow); border-color: rgba(234,179,8,0.3); background: rgba(234,179,8,0.1); }
+.badge-approved { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); }
+.badge-escalated { color: var(--blue); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); }
+
+/* Animasyonlar */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeIn 0.25s ease forwards; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}

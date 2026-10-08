@@ -190,18 +190,23 @@ function setSqlQuery(sqlText) {
 // TABLO SATIR SAYILARI
 function updateTableCounts() {
   const custs = window.LimanDB ? window.LimanDB.getCustomers() : CUSTOMERS;
-  const count = Object.keys(custs).length;
+  const entries = Object.entries(custs);
+  const realCustCount = entries.filter(([k, c]) => !(c.role === 'staff' || c.role === 'admin' || k.startsWith('staff_'))).length;
+  const userStaffCount = entries.filter(([k, c]) => (c.role === 'staff' || c.role === 'admin' || k.startsWith('staff_'))).length;
+  const totalStaffCount = 3 + userStaffCount; // 3 varsayılan tohum çalışan + yeni kayıtlar
   const txCount = window.LimanDB ? window.LimanDB.getTransactions().length : 4;
 
   const countCust = document.getElementById('count-core-customers');
   const countLoans = document.getElementById('count-core-loans');
   const countPlans = document.getElementById('count-agent-plans');
   const countAudit = document.getElementById('count-audit-logs');
+  const countStaff = document.getElementById('count-auth-staff');
 
-  if (countCust) countCust.innerText = count;
-  if (countLoans) countLoans.innerText = count;
-  if (countPlans) countPlans.innerText = count;
+  if (countCust) countCust.innerText = realCustCount;
+  if (countLoans) countLoans.innerText = realCustCount;
+  if (countPlans) countPlans.innerText = realCustCount;
   if (countAudit) countAudit.innerText = txCount;
+  if (countStaff) countStaff.innerText = totalStaffCount;
 }
 
 // METİN ARAMA FİLTRESİ
@@ -287,6 +292,7 @@ async function executeQuery(silent = false) {
   else if (lower.includes('agent.plans') || lower.includes('plans')) table = 'agent.plans';
   else if (lower.includes('disaster.events') || lower.includes('events')) table = 'disaster.events';
   else if (lower.includes('audit.logs') || lower.includes('logs')) table = 'audit.logs';
+  else if (lower.includes('auth.staff_users') || lower.includes('staff_users') || lower.includes('auth.users')) table = 'auth.staff_users';
   else {
     if (errorBox) {
       errorBox.innerText = `psql: error: relation "${sql.split(/\s+/)[3] || 'unknown'}" does not exist in database "afet" (SQLSTATE 42P01)`;
@@ -356,8 +362,10 @@ function getRowsForTable(table) {
   } catch (e) {}
   const entries = Object.entries(custs);
 
+  const realCustEntries = entries.filter(([k, c]) => !(c.role === 'staff' || c.role === 'admin' || k.startsWith('staff_')));
+
   if (table === 'core.customers') {
-    return entries.map(([k, c]) => {
+    return realCustEntries.map(([k, c]) => {
       const parts = (c.name || '').split(' ');
       const cityParts = (c.city || '').split('/');
       const isApproved = c.approved === true || c.loanStatus === 'ONAYLANDI';
@@ -391,7 +399,7 @@ function getRowsForTable(table) {
   }
 
   if (table === 'core.loans') {
-    return entries.map(([k, c], idx) => {
+    return realCustEntries.map(([k, c], idx) => {
       const hasDask = c.dask && c.dask.includes('✓');
       const isApproved = c.approved === true || c.loanStatus === 'ONAYLANDI';
       const isEscalated = c.escalated === true || c.loanStatus === 'TEMSİLCİDE';
@@ -416,7 +424,7 @@ function getRowsForTable(table) {
   }
 
   if (table === 'agent.plans') {
-    return entries.map(([k, c], idx) => {
+    return realCustEntries.map(([k, c], idx) => {
       const isApproved = c.approved === true || c.loanStatus === 'ONAYLANDI';
       const isEscalated = c.escalated === true || c.loanStatus === 'TEMSİLCİDE';
       const isOptOut = c.declined === true || c.loanStatus === 'NORMAL_ÖDEME';
@@ -470,6 +478,82 @@ function getRowsForTable(table) {
       note: t.note || '',
       created_at: `2026-09-30 ${t.time}`
     }));
+  }
+
+  if (table === 'auth.staff_users') {
+    // 1. Varsayılan Personel ve Sistem Yöneticileri
+    const defaultStaff = [
+      {
+        _key: 'staff_seed_001',
+        id: 'staff_adm_001',
+        ad: 'Ahmet',
+        soyad: 'Yıldız',
+        email: 'admin@limanbank.com.tr',
+        rol: 'Sistem Yöneticisi (Admin)',
+        sicil_no: 'LB-9001',
+        birim: 'Bilgi Teknolojileri & Güvenlik',
+        il: 'İstanbul',
+        yas: 42,
+        durum: 'AKTİF',
+        created_at: '2026-09-30 08:00:00',
+        _isNew: false
+      },
+      {
+        _key: 'staff_seed_002',
+        id: 'staff_op_002',
+        ad: 'Zeynep',
+        soyad: 'Kaya',
+        email: 'zeynep.kaya@limanbank.com.tr',
+        rol: 'Banka Operasyon Çalışanı',
+        sicil_no: 'LB-4102',
+        birim: 'Kredi ve Afet Operasyonları',
+        il: 'Ankara',
+        yas: 34,
+        durum: 'AKTİF',
+        created_at: '2026-09-30 08:15:00',
+        _isNew: false
+      },
+      {
+        _key: 'staff_seed_003',
+        id: 'staff_op_003',
+        ad: 'Murat',
+        soyad: 'Çetin',
+        email: 'murat.cetin@limanbank.com.tr',
+        rol: 'Banka Operasyon Çalışanı',
+        sicil_no: 'LB-4103',
+        birim: 'Saha ve Çağrı Destek',
+        il: 'Gaziantep',
+        yas: 29,
+        durum: 'AKTİF',
+        created_at: '2026-09-30 08:30:00',
+        _isNew: false
+      }
+    ];
+
+    // 2. Kullanıcı tarafından canlı kaydedilen çalışan ve adminler
+    const registeredStaff = entries
+      .filter(([k, c]) => k.startsWith('staff_') || c.role === 'staff' || c.role === 'admin')
+      .map(([k, c]) => {
+        const parts = (c.name || '').split(' ');
+        return {
+          _key: k,
+          id: c.id || ('staff_' + k),
+          ad: parts[0] || '',
+          soyad: parts.slice(1).join(' ') || '',
+          email: c.email || '—',
+          rol: c.role === 'admin' ? 'Sistem Yöneticisi (Admin)' : 'Banka Operasyon Çalışanı',
+          sicil_no: c.staffId || '—',
+          birim: c.department || 'Operasyon',
+          il: c.city || '—',
+          yas: c.age || 30,
+          durum: 'AKTİF',
+          created_at: c.registeredAt || new Date().toISOString().replace('T', ' ').substring(0, 19),
+          _isNew: true
+        };
+      });
+
+    // Yeni kayıtlar en üstte gösterilir
+    return [...registeredStaff, ...defaultStaff];
   }
 
   return [];

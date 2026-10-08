@@ -1,0 +1,4 @@
+{"timestamp":"00:00:26.528","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:26.528","source":"Server","level":"LOG","message":"  We detected TypeScript in your project and created a tsconfig.json file for you."}
+{"timestamp":"00:00:31.296","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:31.301","source":"Server","level":"LOG","message":"✓ Generated AGENTS.md and CLAUDE.md for AI agents. Set `agentRules: false` in next.config to disable."}

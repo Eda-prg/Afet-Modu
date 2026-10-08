@@ -276,60 +276,86 @@ body {
 header {
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
-  padding: 12px 24px;
+  padding: 6px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  box-sizing: border-box;
+  width: 100%;
 }
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .brand-badge {
   background: var(--ing-primary);
   color: white;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 6px;
   border-radius: var(--radius-sm);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
 }
 .brand-text h1 {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: -0.01em;
   margin: 0;
+  white-space: nowrap;
 }
 .brand-text span {
-  font-size: 11.5px;
+  font-size: 10.5px;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .nav-tabs {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 2px;
   background: var(--bg-card);
-  padding: 4px;
+  padding: 2px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  overflow: visible;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.nav-tabs::-webkit-scrollbar {
+  display: none;
 }
 .tab-btn {
-  padding: 7px 14px;
+  padding: 5px 8px;
   border-radius: var(--radius-sm);
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.2;
 }
 .tab-btn:hover {
   color: var(--text-main);
@@ -341,46 +367,67 @@ header {
   font-weight: 600;
 }
 
-.db-status-pill {
+.header-right-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: var(--status-green-bg);
-  border: 1px solid var(--status-green-border);
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  color: var(--status-green);
-  font-weight: 600;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
-.api-status-pill {
+.header-status-group {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-.api-status-pill.online {
-  background: var(--status-green-bg);
-  border: 1px solid var(--status-green-border);
-  color: var(--status-green);
-}
-.api-status-pill.offline {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 2px 3px;
+  gap: 2px;
+}
+
+.status-dot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #94a3b8;
+}
+.status-dot.online {
+  background: #22c55e;
+  box-shadow: 0 0 5px rgba(34, 197, 94, 0.6);
+}
+
+.db-status-pill,
+.api-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+.db-status-pill {
+  color: var(--status-green);
+  background: transparent;
+}
+.api-status-pill.online {
+  color: var(--status-green);
+  background: transparent;
+}
+.api-status-pill.offline {
   color: var(--text-muted);
+  background: transparent;
 }
 
 .btn-header-action {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-main);
   border-radius: var(--radius-sm);
@@ -388,7 +435,9 @@ header {
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 .btn-header-action:hover {
   background: var(--bg-card);
@@ -398,23 +447,77 @@ header {
 .user-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  padding: 5px 12px;
+  padding: 3px 8px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-main);
+  white-space: nowrap;
+  line-height: 1.2;
 }
 .logout-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 11.5px;
-  padding: 2px 4px;
+  font-size: 11px;
+  padding: 1px 3px;
+  line-height: 1;
 }
 .logout-btn:hover { color: var(--text-main); }
+
+/* ─── Header Ultra-Sığdırma Responsive Kuralları ─── */
+@media (max-width: 1366px) {
+  header {
+    padding: 5px 10px;
+    gap: 6px;
+  }
+  .brand-text h1 {
+    font-size: 12.5px;
+  }
+  .brand-text span {
+    font-size: 10px;
+  }
+  .tab-btn {
+    padding: 4px 6px;
+    font-size: 11px;
+    gap: 3px;
+  }
+  .header-right-actions {
+    gap: 4px;
+  }
+  .btn-header-action {
+    padding: 3px 6px;
+    font-size: 10.5px;
+  }
+  .mode-badge-indicator {
+    padding: 2.5px 6px;
+    font-size: 10px;
+  }
+  .mode-trigger-btn {
+    padding: 3px 6px !important;
+    font-size: 10.5px !important;
+  }
+  .user-pill {
+    padding: 2.5px 6px;
+    font-size: 10.5px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .brand-text span {
+    display: none;
+  }
+  .tab-btn {
+    padding: 3px 5px;
+    font-size: 10px;
+  }
+  .header-right-actions {
+    gap: 3px;
+  }
+}
 
 /* ─── 3. ANA GÖVDE & DÜZEN ─── */
 main {
@@ -666,6 +769,107 @@ main {
   border-color: var(--status-green-border);
   border-left-color: var(--status-green);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   NORMAL MOD & AFET MODU DİNAMİK GEÇİŞ SİSTEMİ (JÜRİ VE DEMO)
+   ════════════════════════════════════════════════════════════════ */
+.normal-mode-ribbon {
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(241, 245, 249, 0.9));
+  border: 1px solid var(--status-blue-border);
+  border-left: 4px solid var(--status-blue);
+}
+
+.mode-badge-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  user-select: none;
+  line-height: 1.2;
+}
+.mode-badge-indicator.normal {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--status-green);
+}
+.mode-badge-indicator.disaster {
+  background: rgba(217, 83, 0, 0.15);
+  border-color: var(--ing-primary);
+  color: var(--ing-primary);
+  animation: pulse-border 2s infinite;
+}
+.mode-dot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.mode-dot.normal {
+  background: #10B981;
+}
+.mode-dot.disaster {
+  background: #EF4444;
+  box-shadow: 0 0 5px #EF4444;
+}
+
+.mode-trigger-btn {
+  background: linear-gradient(135deg, #D95300, #B84300) !important;
+  color: #FFFFFF !important;
+  border-color: #D95300 !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  border-radius: var(--radius-sm) !important;
+  transition: all 0.2s ease;
+}
+.mode-trigger-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+.mode-trigger-btn.active-disaster {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-hover) !important;
+}
+
+.disaster-emergency-alert {
+  background: linear-gradient(135deg, #991B1B, #B91C1C);
+  color: #FFFFFF;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(185, 28, 28, 0.35);
+  animation: slideDownAlert 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDownAlert {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 83, 0, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(217, 83, 0, 0.1); }
+}
+
 .banking-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1323,4 +1527,333 @@ footer {
   padding: 10px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-main);
+}
+
+/* ── QR Tarayıcı Animasyonları ── */
+@keyframes qrScanLine {
+  0%   { top: 8px;   opacity: 0.4; }
+  50%  { top: 180px; opacity: 1; }
+  100% { top: 8px;   opacity: 0.4; }
+}
+
+#qr-camera-container video {
+  transform: scaleX(-1); /* Ayna efekti — doğal selfie görünümü */
+}
+
+/* ════════════════════════════════════════════════════════════════
+   9. AKILLI TELEFON GELEN SMS BİLDİRİMİ & TELEFON SİMÜLATÖRÜ
+   ════════════════════════════════════════════════════════════════ */
+
+/* Yüzen Akıllı Telefon Push SMS Toast'ı */
+.phone-sms-toast {
+  position: fixed;
+  top: 64px;
+  right: 20px;
+  width: 390px;
+  max-width: calc(100vw - 32px);
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(217, 83, 0, 0.28);
+  z-index: 9999;
+  animation: slideInSms 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #F8FAFC;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+@keyframes slideInSms {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.sms-toast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.sms-toast-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.sms-net-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #94A3B8;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.sms-close-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+.sms-close-btn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sms-toast-sender-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 9px;
+  margin-bottom: 6px;
+}
+.sms-brand-tag {
+  font-weight: 800;
+  font-size: 12.5px;
+  color: #FF8533;
+  letter-spacing: 0.03em;
+}
+
+.sms-toast-bubble {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #E2E8F0;
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+.sms-toast-bubble strong {
+  color: #FFFFFF;
+}
+
+.sms-toast-actions {
+  display: flex;
+  gap: 8px;
+}
+.sms-btn-action {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  color: #F8FAFC;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.sms-btn-action:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+.sms-btn-action.primary {
+  background: linear-gradient(135deg, #D95300, #B84300);
+  border-color: #D95300;
+  color: #FFFFFF;
+}
+.sms-btn-action.primary:hover {
+  filter: brightness(1.1);
+}
+
+/* ── Akıllı Telefon Mockup Modalı (Tam Telefon Görünümü) ── */
+.phone-modal-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.phone-device-shell {
+  width: 340px;
+  height: 640px;
+  background: #090D16;
+  border: 8px solid #2A3342;
+  border-radius: 46px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 0 2px #475569;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.phone-dynamic-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 96px;
+  height: 24px;
+  background: #000000;
+  border-radius: 20px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+.phone-island-cam {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #111827;
+  border: 1px solid #1F2937;
+}
+.phone-island-sensor {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #030712;
+}
+
+.phone-screen {
+  flex: 1;
+  background: #0B0F19;
+  display: flex;
+  flex-direction: column;
+  padding-top: 38px;
+  overflow: hidden;
+}
+.phone-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px 8px;
+  font-size: 11px;
+  color: #CBD5E1;
+  font-weight: 600;
+}
+.phone-app-hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #111827;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.phone-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ing-primary);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.phone-msg-body {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.phone-bubble {
+  max-width: 86%;
+  padding: 10px 13px;
+  border-radius: 16px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.phone-bubble.old {
+  background: #1E293B;
+  color: #94A3B8;
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+}
+.phone-bubble.new {
+  background: linear-gradient(135deg, #1E3A8A, #1D4ED8);
+  color: #F8FAFC;
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  animation: popIn 0.3s ease-out;
+}
+.phone-bubble.outgoing {
+  background: #16A34A;
+  color: #FFFFFF;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 16px;
+  align-self: flex-end;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
+  animation: popIn 0.25s ease-out;
+}
+.phone-bubble.confirmed {
+  background: linear-gradient(135deg, #065F46, #047857);
+  color: #ECFDF5;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  box-shadow: 0 4px 14px rgba(6, 95, 70, 0.4);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  animation: popIn 0.3s ease-out;
+}
+@keyframes popIn {
+  from { transform: scale(0.9) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+.phone-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #111827;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.phone-home-indicator {
+  width: 110px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  margin: 6px auto;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SİSTEM ADMİN & MÜŞTERİ CANLI AFET SENKRONİZASYONU
+   ════════════════════════════════════════════════════════════════ */
+.admin-welcome-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s ease;
+}
+.customer-sms-received-banner {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+  border: 1.5px solid var(--ing-primary);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 24px rgba(217, 83, 0, 0.18);
+  animation: smsSlideIn 0.35s ease-out;
+}
+@keyframes smsSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -32,13 +32,16 @@
       </div>
 
       <div class="login-card">
-        <!-- GİRİŞ / LİMANLI OL TABLARI -->
-        <div class="login-tabs">
+        <!-- GİRİŞ / LİMANLI OL / PERSONEL & ADMİN KAYIT TABLARI -->
+        <div class="login-tabs" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
           <button class="login-tab-btn active" id="btn-login-tab" onclick="switchLoginMode('login')">
             🔑 Giriş Yap
           </button>
-          <button class="login-tab-btn" id="btn-register-tab" onclick="switchLoginMode('register')">
-            🧡 Limanlı Ol (Kayıt)
+          <button class="login-tab-btn" id="btn-register-tab" onclick="switchLoginMode('register', 'customer')">
+            🧡 Müşteri Kayıt
+          </button>
+          <button class="login-tab-btn" id="btn-staff-reg-tab" onclick="switchLoginMode('register', 'staff')" style="color:#7EA5D9">
+            🏦 Çalışan/Admin
           </button>
         </div>
 
@@ -74,6 +77,12 @@
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <button class="demo-role-btn" onclick="fillAndLogin('selma@demo.com', 'demo1234', 'customer', 'selma')">
+                <div>
+                  <div style="font-weight:600;font-size:12px">👩 Selma Hanım</div>
+                  <div style="font-size:10px;color:var(--text-muted)">Afetzede (DASK Yok)</div>
+                </div>
+              </button>
               <button class="demo-role-btn" onclick="fillAndLogin('hatice@demo.com', 'demo1234', 'customer', 'hatice')">
                 <div>
                   <div style="font-weight:600;font-size:12px">👵 Hatice Hanım</div>
@@ -121,6 +130,48 @@
           <form onsubmit="handleFormRegister(event)">
             <!-- YUKARI-AŞAĞI KAYDIRILABİLİR ALAN -->
             <div class="reg-scroll-container" id="reg-scroll-container" onscroll="handleScrollUpdate()">
+              <!-- HESAP / ROL TÜRÜ SEÇİMİ (MÜŞTERİ / ÇALIŞAN / ADMİN) -->
+              <div class="form-group" style="background:rgba(255,255,255,0.03);border:1px solid var(--border-subtle);border-radius:8px;padding:10px;margin-bottom:12px">
+                <label class="form-label" style="color:var(--ing-primary);font-weight:700">👤 KAYIT OLUNACAK HESAP TÜRÜ</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px">
+                  <label style="border:1px solid var(--border-subtle);padding:8px 6px;border-radius:6px;cursor:pointer;text-align:center;font-size:11.5px;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;gap:3px">
+                    <input type="radio" name="reg-account-role" value="customer" checked onchange="toggleRegRoleFields(this.value)" />
+                    <span style="font-weight:600">📱 Müşteri</span>
+                    <span style="font-size:9.5px;color:var(--text-muted)">Afetzede/Vatandaş</span>
+                  </label>
+                  <label style="border:1px solid var(--border-subtle);padding:8px 6px;border-radius:6px;cursor:pointer;text-align:center;font-size:11.5px;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;gap:3px">
+                    <input type="radio" name="reg-account-role" value="staff" onchange="toggleRegRoleFields(this.value)" />
+                    <span style="font-weight:600">🏦 Çalışan</span>
+                    <span style="font-size:9.5px;color:var(--text-muted)">Banka Operasyon</span>
+                  </label>
+                  <label style="border:1px solid var(--border-subtle);padding:8px 6px;border-radius:6px;cursor:pointer;text-align:center;font-size:11.5px;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;gap:3px">
+                    <input type="radio" name="reg-account-role" value="admin" onchange="toggleRegRoleFields(this.value)" />
+                    <span style="font-weight:600">⚙️ Admin</span>
+                    <span style="font-size:9.5px;color:var(--text-muted)">Sistem Yöneticisi</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- PERSONEL / ADMİN ÖZEL ALANLARI (DEPARTMAN & PERSONEL SİCİL NO) -->
+              <div id="reg-staff-admin-fields" style="display:none;background:rgba(217,83,0,0.06);border:1px solid rgba(217,83,0,0.25);border-radius:8px;padding:10px;margin-bottom:12px">
+                <div style="font-size:11px;font-weight:700;color:var(--ing-primary);margin-bottom:6px">🔐 PERSONEL / YÖNETİCİ BİLGİLERİ</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">SİCİL / PERSONEL NO</label>
+                    <input type="text" id="reg-staff-id" class="form-input" placeholder="LB-9042" />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">GÖREV / BİRİM</label>
+                    <select id="reg-staff-dept" class="form-input">
+                      <option value="Kredi Operasyon">Kredi Operasyon</option>
+                      <option value="Risk ve Uyum">Risk ve Uyum (Guardrail)</option>
+                      <option value="Çağrı Merkezi">Afet Destek Masası</option>
+                      <option value="BT & Altyapı">BT & Sistem Güvenliği</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div class="form-group">
                   <label class="form-label">AD</label>
@@ -163,21 +214,31 @@
                 <input type="email" id="reg-email" class="form-input" placeholder="ornek@musteri.com" required />
               </div>
 
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <div class="form-group">
-                  <label class="form-label">KREDİ TÜRÜ</label>
-                  <select id="reg-loan" class="form-input">
-                    <option value="konut">Konut Kredisi</option>
-                    <option value="ihtiyac">İhtiyaç Kredisi</option>
-                    <option value="kart">Kredi Kartı</option>
-                  </select>
+              <!-- MÜŞTERİYE ÖZEL KREDİ VE ÖNCELİK ALANLARI -->
+              <div id="reg-customer-specific-fields">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div class="form-group">
+                    <label class="form-label">KREDİ TÜRÜ</label>
+                    <select id="reg-loan" class="form-input">
+                      <option value="konut">Konut Kredisi</option>
+                      <option value="ihtiyac">İhtiyaç Kredisi</option>
+                      <option value="kart">Kredi Kartı</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">DASK DURUMU</label>
+                    <select id="reg-dask" class="form-input">
+                      <option value="true">DASK Poliçem Var</option>
+                      <option value="false">DASK Bulunmuyor</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">DASK DURUMU</label>
-                  <select id="reg-dask" class="form-input">
-                    <option value="true">DASK Poliçem Var</option>
-                    <option value="false">DASK Bulunmuyor</option>
-                  </select>
+
+                <div style="margin:12px 0;font-size:11.5px;color:var(--text-muted)">
+                  <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+                    <input type="checkbox" id="reg-hassas" style="margin-top:2px" />
+                    <span>65 yaş üstü veya engelli bireyim (Afet Modu Öncelikli Destek Kapsamı)</span>
+                  </label>
                 </div>
               </div>
 
@@ -191,15 +252,8 @@
 
               <div style="margin:12px 0;font-size:11.5px;color:var(--text-muted)">
                 <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-                  <input type="checkbox" id="reg-hassas" style="margin-top:2px" />
-                  <span>65 yaş üstü veya engelli bireyim (Afet Modu Öncelikli Destek Kapsamı)</span>
-                </label>
-              </div>
-
-              <div style="margin:12px 0;font-size:11.5px;color:var(--text-muted)">
-                <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
                   <input type="checkbox" required style="margin-top:2px" />
-                  <span>KVKK Aydınlatma Metni'ni ve Liman Bankası Müşteri Sözleşmesi'ni okudum, onaylıyorum.</span>
+                  <span>KVKK Aydınlatma Metni'ni ve Liman Bankası Sözleşmesi'ni okudum, onaylıyorum.</span>
                 </label>
               </div>
 
@@ -214,7 +268,7 @@
               </div>
             </div>
 
-            <button type="submit" class="btn-action-primary" style="width:100%;justify-content:center;padding:12px;margin-top:12px;background:var(--ing-primary)">
+            <button type="submit" id="btn-submit-register" class="btn-action-primary" style="width:100%;justify-content:center;padding:12px;margin-top:12px;background:var(--ing-primary)">
               🧡 Limanlı Ol ve Hesabı Başlat
             </button>
           </form>
@@ -232,48 +286,63 @@
       <div class="brand-badge">LB</div>
       <div class="brand-text">
         <h1>Liman Dijital Bankacılık</h1>
-        <span>Afet Modu Entegre Deneyimi</span>
+        <span id="brand-portal-sub">Bireysel Bankacılık Portalı</span>
       </div>
     </div>
 
     <!-- TABS -->
     <div class="nav-tabs">
       <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">
-        📱 Liman Dijital Bankacılık
+        📱 Müşteri Portalı
       </button>
       <button class="tab-btn" id="tab-dash-btn" onclick="switchTab('dashboard')">
-        🏦 Operasyon Konsolu
+        🏦 Operasyon
       </button>
       <button class="tab-btn" id="tab-agent-btn" onclick="switchTab('agent')">
-        🤖 Ajan & Tool İzleri
+        🤖 Ajan İzleri
       </button>
       <button class="tab-btn" id="tab-audit-btn" onclick="switchTab('audit')">
-        🛡️ Kurallar & Audit Log
+        🛡️ Audit Log
       </button>
       <button class="tab-btn" id="tab-database-btn" onclick="switchTab('database')">
-        🐘 PostgreSQL Veritabanı
+        🐘 Veritabanı
       </button>
     </div>
 
-    <div style="display:flex;align-items:center;gap:8px">
-      <div class="api-status-pill offline" id="api-status-pill" title="FastAPI API Servisi (:8000) kontrol ediliyor...">
-        ● ⚪ API: BAĞLANIYOR...
+    <div class="header-right-actions">
+      <!-- Sistem Modu Rozeti (Normal / Afet Modu) -->
+      <div class="mode-badge-indicator normal" id="header-mode-badge" onclick="toggleSimBar()" title="Sistem İşletim Durumu (Tıklayarak Simülatörü Aç)">
+        <span class="mode-dot normal" id="header-mode-dot"></span>
+        <span id="header-mode-text">Normal Mod</span>
       </div>
-      <div class="db-status-pill" title="PostgreSQL 16 afet DB bağlantısı aktif ve canlı">
-        ● 🐘 DB: BAĞLI
-      </div>
-      <button class="btn-header-action" onclick="openDatabaseWindow()">
-        🗄️ Ayrı Pencerede Aç ↗
+
+      <!-- Anlık Afet Tetikleme / Sıfırlama Butonu -->
+      <button class="btn-header-action mode-trigger-btn" id="btn-header-trigger" onclick="toggleDisasterMode()" title="M7.4 Deprem Bildirimini Tetikle ve Afet Modu'na Geç">
+        <span>🚨</span> Afet Tetikle ⚡
       </button>
-      <button class="btn-header-action" onclick="toggleSimBar()">
-        ⚡ Afet Simülatörü ▾
+
+      <!-- Durum Rozetleri (Kompakt Tek Satır & Noktalı) -->
+      <div class="header-status-group">
+        <div class="api-status-pill offline" id="api-status-pill" title="FastAPI API Servisi (:8000) kontrol ediliyor...">
+          <span class="status-dot"></span><span>API</span>
+        </div>
+        <div class="db-status-pill" title="PostgreSQL / SQLite veritabanı bağlantısı aktif">
+          <span class="status-dot online"></span><span>DB</span>
+        </div>
+      </div>
+
+      <button class="btn-header-action" id="btn-header-db" onclick="openDatabaseWindow()" title="Veritabanını ayrı pencerede aç">
+        🗄️ DB ↗
+      </button>
+      <button class="btn-header-action" id="btn-header-sim" onclick="toggleSimBar()" title="Afet Simülatörünü Göster/Gizle">
+        ⚡ Simülatör ▾
       </button>
       <button class="btn-header-action" id="btn-theme-toggle" onclick="toggleTheme()" title="Açık / Koyu Tema">
         <span id="theme-toggle-icon">🌙</span>
       </button>
       <div class="user-pill">
-        <span id="active-user-badge">👤 Hatice Hanım</span>
-        <button class="logout-btn" onclick="openLogin()">Değiştir ⎋</button>
+        <span id="active-user-badge">👤 Selma Hanım</span>
+        <button class="logout-btn" onclick="openLogin()">⎋</button>
       </div>
     </div>
   </header>
@@ -283,6 +352,25 @@
   <!-- 3. ANA GÖVDE                                                    -->
   <!-- ════════════════════════════════════════════════════════════════ -->
   <main>
+
+    <!-- ANLIK AFET BİLDİRİMİ TOAST/BANT (AFET TETİKLENDİĞİNDE AÇILIR) -->
+    <div id="disaster-emergency-alert" class="disaster-emergency-alert" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">🚨</span>
+        <div>
+          <div style="font-weight:700;font-size:13.5px" id="emergency-alert-title">AFAD & Kandilli: M7.4 Deprem Bildirimi Alındı — Müşteriye SMS İletildi!</div>
+          <div style="font-size:11.5px;opacity:0.9" id="emergency-alert-sub">Liman Bankası Otonom Afet Modu devrede. Müşteriye geçmiş olsun mesajı ve erteleme taslağı iletildi.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="switchTab('customer')" style="background:#FFFFFF;color:#991B1B;border:none;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+          <span>📱</span> Müşteri Ekranında Mesajı Gör
+        </button>
+        <button onclick="dismissEmergencyAlert()" style="background:transparent;border:1px solid rgba(255,255,255,0.4);color:#FFFFFF;padding:6px 10px;border-radius:6px;font-size:11.5px;cursor:pointer">
+          ✕
+        </button>
+      </div>
+    </div>
 
     <!-- DÜŞEN YENİ AFET BİLDİRİMİ (RİZE SEL & HEYELAN) -->
     <div id="disaster-drop-banner" class="disaster-drop-banner">
@@ -324,15 +412,34 @@
           <h2 style="font-size:15px;font-weight:700;color:var(--text-main)" id="current-disaster-title">M7.4 Deprem Bildirimi (Doğu Anadolu Fayı)</h2>
         </div>
         <div style="font-size:12px;color:var(--text-muted)" id="current-disaster-desc">
-          Etkilenen İller: <strong>Hatay · Kahramanmaraş · Malatya · Adıyaman · Gaziantep</strong> · Kaynak: <strong>AFAD/Kandilli</strong>
+          Etkilenen İller: <strong>Hatay · Kahramanmaraş · Malatya · Adıyaman · Gaziantep</strong> · Kaynak: <strong>AFAD/Kandilli (simülasyon)</strong>
         </div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--border-subtle);padding:4px 8px;border-radius:6px">
+          <span style="font-size:11px;font-weight:600;color:var(--text-muted)">Demo Müşteri Seç:</span>
+          <select id="quick-cust-switch" onchange="pickCustomer(this.value)" style="background:transparent;border:none;color:white;font-size:11.5px;cursor:pointer;outline:none">
+            <option value="selma">👩 Selma Hanım (Malatya - DASK Yok)</option>
+            <option value="hatice">👵 Hatice Hanım (Hatay - Konut)</option>
+            <option value="emre">👨 Emre Bey (K.Maraş - İhtiyaç)</option>
+            <option value="dursun">🌊 Dursun Ali Reis (Rize - Çay/Konut)</option>
+            <option value="fadime">🌊 Fadime Kaya (Rize - Konut)</option>
+            <option value="temel">🌊 Temel Karadeniz (Rize - İhtiyaç)</option>
+            <option value="asiye">🌊 Asiye Yıldız (Rize - Esnaf)</option>
+            <option value="idris">🌊 İdris Çepni (Rize - Temsilci Devri)</option>
+          </select>
+        </div>
         <button class="btn-action-primary" style="background:#1E40AF" id="btn-trigger-flood" onclick="triggerRizeFloodSimulation()">
           <span>🌊</span> Rize Sel Felaketini Tetikle (+5 Müşteri)
         </button>
         <button class="btn-action-primary" id="btn-trigger" onclick="runDisasterSimulation()">
           <span>⚡</span> M7.4 Deprem Simülasyonu
+        </button>
+        <button class="btn-action-primary" style="background:#0F172A;border:1px solid rgba(255,255,255,0.2);color:#F8FAFC" onclick="openPhoneModal()" title="Müşterinin akıllı telefonundaki SMS ekranını aç">
+          <span>📱</span> Telefon (SMS)
+        </button>
+        <button class="btn-action-primary" style="background:var(--bg-card);border:1px solid var(--border-hover);color:var(--text-main)" onclick="resetToNormalMode()" title="Simülasyonu sıfırla ve Normal Bankacılık Modu'na dön">
+          <span>🔄</span> Normal Moda Sıfırla
         </button>
       </div>
 
@@ -354,6 +461,47 @@
     <!-- ─── SEKME 1: OPERASYON KONSOLU (BANKA ÇALIŞANI & DENETİM) ─── -->
     <div id="view-dashboard" style="display:none">
 
+      <!-- YÖNETİCİ / OPERASYON HOŞ GELDİNİZ BANTI -->
+      <div class="admin-welcome-bar" id="admin-welcome-bar">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;font-size:22px" id="admin-welcome-icon">
+              ⚙️
+            </div>
+            <div>
+              <h2 style="font-size:17px;font-weight:700;color:var(--text-main);margin:0" id="admin-welcome-title">
+                Hoş Geldiniz, Sistem Yöneticisi ⚙️
+              </h2>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="admin-welcome-sub">
+                Liman Bankası Otonom Afet Koordinasyonu & Karar Konsolu (Root / Tam Yetki)
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="badge-pill" style="background:rgba(16,185,129,0.15);color:#34D399;border:1px solid rgba(16,185,129,0.3);font-weight:600">
+              ● Sistem Çevrim İçi & Otonom İzlemede
+            </span>
+            <button class="btn-action-primary" style="padding:6px 12px;font-size:11.5px;background:#1E293B;border:1px solid var(--border-subtle);color:var(--text-main)" onclick="switchTab('customer')">
+              📱 Müşteri Önizlemesine Geç →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- NORMAL MOD BEKLEME BANTI -->
+      <div id="op-normal-standby-banner" style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">🟢</span>
+          <div>
+            <strong style="color:var(--text-main);font-size:13px">Normal Bankacılık İşletimi Aktif</strong>
+            <div style="font-size:11.5px;color:var(--text-muted)">Aktif bir afet acil durumu kaydı bulunmamaktadır. Tüm servisler olağan akışında çalışıyor.</div>
+          </div>
+        </div>
+        <button class="btn-action-primary" onclick="triggerDisasterMode()" style="padding:8px 14px;font-size:12px;background:var(--ing-primary)">
+          <span>⚡</span> M7.4 Deprem Simülasyonunu Başlat
+        </button>
+      </div>
+
       <!-- METRİK SAYAÇLARI -->
       <div class="metrics-row">
         <div class="metric-card">
@@ -374,7 +522,7 @@
         <div class="metric-card">
           <div class="metric-title">Ötelenen Taksit Hacmi</div>
           <div class="metric-num" style="color:var(--ing-primary)" id="stat-hacim">₺8.54M</div>
-          <div class="metric-sub">Faizsiz ve cezasız vade sonu</div>
+          <div class="metric-sub">Ek masrafsız vade sonu öteleme</div>
         </div>
         <div class="metric-card">
           <div class="metric-title">Müşteri Onayı / Temsilci Devri</div>
@@ -482,32 +630,73 @@
         <!-- MÜŞTERİ KARŞILAMA VE GÜVENLİK BİLGİSİ -->
         <div class="banking-header-bar">
           <div class="banking-user-info">
-            <h2>İyi Günler, Sayın <span id="bank-cust-name">Hatice Hanım</span> 👋</h2>
+            <h2 id="banking-greeting-title">İyi Günler, Sayın <span id="bank-cust-name">Selma Hanım</span> 👋</h2>
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:12px">
-              <span>Müşteri No: <strong style="color:var(--text-main)">8492019</strong></span>
+              <span>Müşteri No: <strong id="bank-cust-no" style="color:var(--text-main)">8492019</strong></span>
               <span style="color:var(--text-dim)">•</span>
-              <span>İkâmet: <strong id="bank-cust-city" style="color:var(--text-main)">Hatay / Antakya</strong></span>
+              <span>İkâmet: <strong id="bank-cust-city" style="color:var(--text-main)">Malatya / Battalgazi</strong></span>
               <span style="color:var(--text-dim)">•</span>
               <span style="color:var(--status-green)">● 2FA Mobil Doğrulandı</span>
+              <span id="bank-role-preview-badge" style="display:none;background:rgba(59,130,246,0.15);color:#60A5FA;border:1px solid rgba(59,130,246,0.3);padding:1px 8px;border-radius:12px;font-size:10.5px;font-weight:600">⚙️ Yönetici Önizleme Modu</span>
             </div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center">
-            <span style="font-size:11.5px;color:var(--text-muted)">Aktif Müşteri:</span>
-            <select id="quick-cust-switch" onchange="pickCustomer(this.value)" style="background:var(--bg-card);border:1px solid var(--border-subtle);color:white;padding:6px 12px;border-radius:6px;font-size:12px">
-              <option value="hatice">👵 Hatice Hanım (Hatay - Konut)</option>
-              <option value="emre">👨 Emre Bey (K.Maraş - İhtiyaç)</option>
-              <option value="selma">👩 Selma Hanım (Malatya - DASK Yok)</option>
-              <option value="dursun">🌊 Dursun Ali Reis (Rize - Çay/Konut)</option>
-              <option value="fadime">🌊 Fadime Kaya (Rize - Konut)</option>
-              <option value="temel">🌊 Temel Karadeniz (Rize - İhtiyaç)</option>
-              <option value="asiye">🌊 Asiye Yıldız (Rize - Esnaf)</option>
-              <option value="idris">🌊 İdris Çepni (Rize - Temsilci Devri)</option>
-            </select>
           </div>
         </div>
 
-        <!-- DOĞAL BANKACILIK AKIŞI: AFET DESTEK BİLDİRİM BANTI -->
-        <div class="banking-ribbon" id="bank-afet-ribbon">
+        <!-- YENİ GELEN SMS VE AFET MESAJI BİLDİRİM KARTI (AFET TETİKLENDİĞİNDE MÜŞTERİDE GÖRÜNÜR) -->
+        <div id="customer-sms-received-banner" class="customer-sms-received-banner" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <div style="width:42px;height:42px;border-radius:10px;background:rgba(217,83,0,0.2);border:1px solid rgba(217,83,0,0.4);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">
+                📩
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="badge-pill" style="background:var(--ing-primary);color:#FFFFFF;font-weight:700;font-size:11px">GELEN SMS BİLDİRİMİ</span>
+                  <span style="font-size:11.5px;color:var(--text-dim)" id="customer-sms-sender-info">Liman Bankası (B002) · 0850 222 0 600</span>
+                </div>
+                <div style="font-size:13.5px;color:#F8FAFC;margin-top:6px;font-weight:500;line-height:1.5" id="customer-sms-content-text">
+                  Sayın Selma Hanım, bölgenizde meydana gelen deprem felaketi sebebiyle geçmiş olsun dileklerimizi iletiyoruz. Liman Bankası olarak yanınızdayız. Mevcut Konut Kredisi borcunuz için 3 Ay kolaylaştırıcı erteleme talebi taslağınız hazırlanmıştır. Liman Mobil şubenizden tek tıkla inceleyip onaylayabilirsiniz. Acil Afet Masası: 0850 222 0 600 B002
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn-action-primary" onclick="openPhoneModal()" style="padding:7px 12px;font-size:12px;background:#0F172A;border:1px solid rgba(255,255,255,0.25);color:#F8FAFC">
+                📱 Telefonda Gör
+              </button>
+              <button class="btn-decision-approve" onclick="approvePlan()" style="padding:7px 14px;font-size:12px">
+                ✓ Ertelemeyi Onayla
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. NORMAL MOD BANNER (BAŞLANGIÇTA GÖRÜNÜR) -->
+        <div class="banking-ribbon normal-mode-ribbon" id="bank-normal-banner">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:42px;height:42px;border-radius:10px;background:rgba(30,64,175,0.12);border:1px solid rgba(30,64,175,0.25);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+              ✨
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--status-blue);text-transform:uppercase;letter-spacing:0.04em">
+                Liman Dijital Bankacılık · Günlük İşlemleriniz Hazır
+              </div>
+              <div style="font-size:13.5px;color:var(--text-main);margin-top:2px">
+                Tüm vadesiz hesaplarınız, kartlarınız ve kredi ödemeleriniz olağan akışında aktiftir. FAST ve fatura ödemelerinizi 7/24 anında yapabilirsiniz.
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-bank-action primary" onclick="openFastModal()">
+              💸 FAST Para Gönder
+            </button>
+            <button class="btn-bank-action" onclick="openAccountSummaryModal()">
+              📑 Hesap Özeti
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. AFET DESTEK BİLDİRİM BANTI (AFET MODUNDA GÖRÜNÜR) -->
+        <div class="banking-ribbon" id="bank-afet-ribbon" style="display:none">
           <div style="display:flex;align-items:center;gap:14px">
             <div style="width:42px;height:42px;border-radius:10px;background:rgba(217,83,0,0.18);border:1px solid var(--ing-border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0" id="ribbon-icon">
               🚨
@@ -517,7 +706,7 @@
                 Liman Afet Destek Paketi · Otomatik Durum Tespiti
               </div>
               <div style="font-size:13.5px;color:var(--text-main);margin-top:2px" id="ribbon-msg">
-                Bölgenizde yaşanan afet sebebiyle <strong id="ribbon-loan-type">Konut Krediniz</strong> için <strong><span id="ribbon-months">4 Aylık</span> faizsiz erteleme taslağınız</strong> hazırlandı.
+                Bölgenizde yaşanan afet sebebiyle <strong id="ribbon-loan-type">Konut Krediniz</strong> için <strong><span id="ribbon-months">3 Aylık</span> erteleme talebi taslağınız</strong> hazırlandı.
               </div>
             </div>
           </div>
@@ -594,7 +783,7 @@
           </div>
 
           <!-- KART 3: AKTİF KREDİ VE GÖMÜLÜ AFET AKIŞI KARTI (KİLİT NOKTA) -->
-          <div class="banking-card" style="border:1px solid var(--ing-border)">
+          <div class="banking-card" id="bank-loan-card" style="border:1px solid var(--border-subtle)">
             <div>
               <div class="banking-card-hdr">
                 <span class="banking-card-title">
@@ -614,8 +803,25 @@
                 </div>
               </div>
 
-              <!-- GÖMÜLÜ AFET AKIŞI ALANI (FLOW ANCHOR) -->
-              <div class="loan-afet-box" id="bank-loan-afet-box">
+              <!-- 1. OLAĞAN KREDİ DURUM KUTUSU (NORMAL MODDA AÇIK) -->
+              <div class="loan-normal-box" id="bank-loan-normal-box" style="margin-top:14px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <span style="font-size:11.5px;font-weight:700;color:var(--status-green);display:flex;align-items:center;gap:5px">
+                    ● Ödemeler Düzenli (Gecikme Yok)
+                  </span>
+                  <span style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono'">Otomatik Talimat Aktif</span>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);line-height:1.4">
+                  Sonraki taksit vadesi: <strong style="color:var(--text-main)">15 Kasım 2026</strong> · Tutar: <strong style="color:var(--text-main)" id="loan-normal-inst">14.500 ₺</strong>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                  <button class="btn-bank-action" style="flex:1;justify-content:center;padding:7px;font-size:11.5px" onclick="openStatementModal()">📅 Ödeme Planı</button>
+                  <button class="btn-bank-action" style="flex:1;justify-content:center;padding:7px;font-size:11.5px" onclick="alert('Ara ödeme ve erken kapama hesaplama ekranı açılıyor.')">⚡ Ara Ödeme Yap</button>
+                </div>
+              </div>
+
+              <!-- 2. GÖMÜLÜ AFET AKIŞI ALANI (AFET MODUNDA AÇIK) -->
+              <div class="loan-afet-box" id="bank-loan-afet-box" style="display:none">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
                   <span id="bank-loan-badge" class="badge-pill" style="background:var(--status-amber-bg);color:var(--status-amber);font-weight:700">
                     ⏳ Afet Erteleme Taslağınız Hazırlandı
@@ -623,7 +829,7 @@
                   <span id="bank-loan-dask" style="font-size:11px;color:var(--status-green);font-weight:600">✓ DASK Var</span>
                 </div>
                 <div id="bank-loan-desc" style="font-size:12px;color:#CBD5E1;line-height:1.4">
-                  Bölgenizdeki afet tespitiyle <strong id="bank-loan-months-desc">4 aylık faizsiz vade sonu erteleme</strong> seçeneğiniz tanımlanmıştır.
+                  Bölgenizdeki afet tespitiyle <strong id="bank-loan-months-desc">3 aylık erteleme talebi planı</strong> seçeneğiniz tanımlanmıştır.
                 </div>
                 
                 <!-- 3 SEÇENEK: [Onayla] · [Temsilci] · [Sorum Var] -->
@@ -644,8 +850,8 @@
               </div>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-dim);margin-top:14px;border-top:1px solid var(--border-subtle);padding-top:8px">
-              <span>Sonraki Taksit: 24 Ekim 2026</span>
-              <span id="bank-loan-total-deferred">Ötelenen: 58.000 ₺</span>
+              <span id="bank-loan-footer-left">Sonraki Taksit: 15 Kasım 2026</span>
+              <span id="bank-loan-total-deferred">Otomatik Ödeme Aktif ✓</span>
             </div>
           </div>
 
@@ -729,6 +935,9 @@
               </span>
             </div>
             <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn-bank-action primary" id="btn-quick-afet-flow" style="display:none;justify-content:flex-start;padding:11px 14px" onclick="openAfetFlowModal()">
+                <span>🛡️</span> Afet Erteleme Akışını Başlat
+              </button>
               <button class="btn-bank-action" style="justify-content:flex-start;padding:11px 14px" onclick="openFastModal()">
                 <span>💸</span> Başka Hesaba FAST Gönder
               </button>
@@ -738,16 +947,190 @@
               <button class="btn-bank-action" style="justify-content:flex-start;padding:11px 14px" onclick="openFxModal()">
                 <span>💱</span> Döviz & Altın İşlemleri
               </button>
-              <button class="btn-bank-action primary" style="justify-content:flex-start;padding:11px 14px" onclick="openAfetFlowModal()">
-                <span>🛡️</span> Afet Erteleme Akışını Başlat
-              </button>
             </div>
 
-            <div style="margin-top:16px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;font-size:11.5px;color:var(--text-muted)">
-              <strong>7/24 Afet Destek Hattı:</strong> 0850 222 0 600 numaralı hattan Afet Masası müşteri temsilcisine öncelikli bağlanabilirsiniz.
+            <div id="bank-support-desc" style="margin-top:16px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;font-size:11.5px;color:var(--text-muted)">
+              <strong>7/24 Müşteri İletişim Merkezi:</strong> 0850 222 0 600 numaralı hattan müşteri temsilcimize dilediğiniz an bağlanabilirsiniz.
             </div>
           </div>
 
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── SEKME: AFET BAĞIŞ MERKEZİ (DEDİKATED BAĞIŞ SAYFASI) ─── -->
+    <div id="view-donation" style="display:none">
+      <div class="banking-container" style="max-width:1100px;margin:0 auto">
+        <!-- BAĞIŞ HERO BANT -->
+        <div style="background:linear-gradient(135deg, rgba(217,83,0,0.18), rgba(255,122,26,0.08));border:1px solid var(--ing-border);border-radius:12px;padding:24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <span style="font-size:28px">🧡</span>
+              <span class="badge-pill" style="background:var(--ing-primary);color:#fff;font-weight:700">LİMAN DAYANIŞMA KÖPRÜSÜ</span>
+              <span style="font-size:12px;color:var(--text-muted)">0 TL Transfer Ücreti · Anında İletim</span>
+            </div>
+            <h2 style="font-size:22px;font-weight:800;color:var(--text-main);margin:0 0 6px">Afetzede Vatandaşlarımız İçin Tek Yürek</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin:0;max-width:650px;line-height:1.5">
+              Deprem ve sel felaketlerinden etkilenen vatandaşlarımızın acil barınma, gıda, sağlık ve temel ihtiyaçları için doğrulanmış resmi kurum ve sivil toplum kuruluşlarına komisyonsuz doğrudan bağış yapabilirsiniz.
+            </p>
+          </div>
+          <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:10px;padding:14px 20px;text-align:right">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase">Vadesiz Hesap Bakiyeniz</div>
+            <div style="font-size:22px;font-weight:800;color:var(--status-green)" id="donation-tab-balance">₺48.250,00</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">TR33 0009 ... 7890 01</div>
+          </div>
+        </div>
+
+        <!-- 4 RESMİ FON KARTI (HIZLI BAĞIŞ KARTLARI) -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:16px;margin-bottom:24px">
+          <!-- KART 1: AFAD -->
+          <div class="banking-card" style="border-top:4px solid #D95300;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                <span style="font-size:32px">🇹🇷</span>
+                <span class="badge-pill" style="background:rgba(217,83,0,0.15);color:var(--ing-primary);font-weight:700">Resmi Afet Fonu</span>
+              </div>
+              <h3 style="font-size:16px;font-weight:700;color:var(--text-main);margin:0 0 4px">AFAD Deprem & Sel Fonu</h3>
+              <p style="font-size:12px;color:var(--text-muted);line-height:1.4">T.C. İçişleri Bakanlığı koordinasyonunda acil barınma, arama-kurtarma ve iaşe yardımları.</p>
+              <div style="font-size:11px;color:var(--text-dim);background:var(--bg-card);padding:6px 10px;border-radius:4px;font-family:'JetBrains Mono';margin-top:10px">
+                Ziraat Bankası · TR73 0001 ... 5550 01
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn-action-primary" style="width:100%;justify-content:center;padding:10px;background:var(--ing-primary)" onclick="quickDonateTo('afad')">
+                🧡 AFAD'a Bağış Yap
+              </button>
+            </div>
+          </div>
+
+          <!-- KART 2: AKUT -->
+          <div class="banking-card" style="border-top:4px solid #10B981;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                <span style="font-size:32px">🦺</span>
+                <span class="badge-pill" style="background:rgba(16,185,129,0.15);color:#10B981;font-weight:700">Arama & Kurtarma</span>
+              </div>
+              <h3 style="font-size:16px;font-weight:700;color:var(--text-main);margin:0 0 4px">AKUT Arama Kurtarma Derneği</h3>
+              <p style="font-size:12px;color:var(--text-muted);line-height:1.4">Enkaz altı arama kurtarma, sel tahliye operasyonları ve teknik ilk yardım lojistiği.</p>
+              <div style="font-size:11px;color:var(--text-dim);background:var(--bg-card);padding:6px 10px;border-radius:4px;font-family:'JetBrains Mono';margin-top:10px">
+                İş Bankası · TR44 0006 ... 1996 01
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn-action-primary" style="width:100%;justify-content:center;padding:10px;background:#059669" onclick="quickDonateTo('akut')">
+                🦺 AKUT'a Bağış Yap
+              </button>
+            </div>
+          </div>
+
+          <!-- KART 3: TÜRK KIZILAY -->
+          <div class="banking-card" style="border-top:4px solid #EF4444;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                <span style="font-size:32px">🔴</span>
+                <span class="badge-pill" style="background:rgba(239,68,68,0.15);color:#EF4444;font-weight:700">Beslenme & İnsani</span>
+              </div>
+              <h3 style="font-size:16px;font-weight:700;color:var(--text-main);margin:0 0 4px">Türk Kızılay</h3>
+              <p style="font-size:12px;color:var(--text-muted);line-height:1.4">Günde 100.000 kişilik sıcak çorba/yemek, kan bağışı lojistiği ve hijyen kolisi desteği.</p>
+              <div style="font-size:11px;color:var(--text-dim);background:var(--bg-card);padding:6px 10px;border-radius:4px;font-family:'JetBrains Mono';margin-top:10px">
+                VakıfBank · TR22 0001 ... 8415 01
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn-action-primary" style="width:100%;justify-content:center;padding:10px;background:#DC2626" onclick="quickDonateTo('kizilay')">
+                🔴 Kızılay'a Bağış Yap
+              </button>
+            </div>
+          </div>
+
+          <!-- KART 4: RİZE SEL & HEYELAN -->
+          <div class="banking-card" style="border-top:4px solid #3B82F6;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                <span style="font-size:32px">🌊</span>
+                <span class="badge-pill" style="background:rgba(59,130,246,0.15);color:#3B82F6;font-weight:700">Güncel Afet Masası</span>
+              </div>
+              <h3 style="font-size:16px;font-weight:700;color:var(--text-main);margin:0 0 4px">Rize Sel & Heyelan Fonu</h3>
+              <p style="font-size:12px;color:var(--text-muted);line-height:1.4">Doğu Karadeniz taşkın bölgesinde evi/işyeri zarar gören ailelere doğrudan acil yardım.</p>
+              <div style="font-size:11px;color:var(--text-dim);background:var(--bg-card);padding:6px 10px;border-radius:4px;font-family:'JetBrains Mono';margin-top:10px">
+                Halkbank · TR19 0001 ... 2300 01
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn-action-primary" style="width:100%;justify-content:center;padding:10px;background:#2563EB" onclick="quickDonateTo('rize_sel')">
+                🌊 Rize Fonuna Bağış Yap
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HIZLI FORM VE BAĞIŞ ŞEFFAFLIK BİLGİSİ -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+          <div class="banking-card">
+            <h3 style="font-size:15px;font-weight:700;color:var(--text-main);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+              <span>⚡</span> Hızlı Bağış Formu
+            </h3>
+            <form onsubmit="submitDonation(event)">
+              <div class="form-group">
+                <label class="form-label">KURUM SEÇİN</label>
+                <select id="quick-donation-org" class="form-input" onchange="syncDonationOrgSelection(this.value)">
+                  <option value="afad">AFAD — T.C. İçişleri Bakanlığı Afet Fonu</option>
+                  <option value="akut">AKUT — Arama Kurtarma Derneği</option>
+                  <option value="kizilay">Türk Kızılay — Beslenme ve Barınma</option>
+                  <option value="rize_sel">Rize Valiliği — Sel & Heyelan Fonu</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">BAĞIŞ TUTARI (TL)</label>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
+                  <button type="button" class="btn-bank-action" onclick="setQuickDonationAmount(100)">100 ₺</button>
+                  <button type="button" class="btn-bank-action" onclick="setQuickDonationAmount(250)">250 ₺</button>
+                  <button type="button" class="btn-bank-action" onclick="setQuickDonationAmount(500)">500 ₺</button>
+                  <button type="button" class="btn-bank-action" onclick="setQuickDonationAmount(1000)">1.000 ₺</button>
+                </div>
+                <input type="number" id="quick-donation-amount" class="form-input" placeholder="Tutar girin (Örn: 250)" min="10" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">BAĞIŞÇI NOTU</label>
+                <input type="text" id="quick-donation-note" class="form-input" placeholder="Örn: Afetzede kardeşlerimize destek olsun" />
+              </div>
+              <button type="submit" class="btn-action-primary" style="width:100%;justify-content:center;padding:12px;background:var(--ing-primary);font-size:13.5px">
+                🧡 Bağışı Şimdi Gönder (0 TL Masraf)
+              </button>
+            </form>
+          </div>
+
+          <!-- DAYANIŞMA ŞEFFAFLIK PANOSU -->
+          <div class="banking-card">
+            <h3 style="font-size:15px;font-weight:700;color:var(--text-main);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+              <span>📊</span> Liman Bankası Dayanışma Raporu
+            </h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:12px">
+                <div style="font-size:11px;color:var(--text-muted)">Toplam Toplanan Bağış</div>
+                <div style="font-size:18px;font-weight:800;color:var(--ing-primary);margin-top:2px" id="total-donation-collected">₺1.428.500</div>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:12px">
+                <div style="font-size:11px;color:var(--text-muted)">Bağışçı Sayısı</div>
+                <div style="font-size:18px;font-weight:800;color:var(--status-green);margin-top:2px">3.842 Kişi</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.6">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                <span style="color:var(--status-green);font-weight:700">✓</span>
+                <span><strong>EFT / FAST Masrafı Yok:</strong> Tüm tutar eksiksiz kurumlara aktarılır.</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                <span style="color:var(--status-green);font-weight:700">✓</span>
+                <span><strong>Resmi Makbuz & Dekont:</strong> Bağışınız anında e-posta ve SMS ile belgelenir.</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="color:var(--status-green);font-weight:700">✓</span>
+                <span><strong>Denetlenebilir Kayıt:</strong> Tüm işlemler bankacılık Audit Log üzerinde mühürlenir.</span>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -794,7 +1177,7 @@
                 Adım 1 / 3 · Otonom Durum Tespiti
               </span>
               <span class="badge-pill" style="background:rgba(46,158,104,0.15);color:var(--status-green);font-weight:700">
-                ✓ Doğrulandı (AFAD / Kandilli)
+                ✓ Doğrulandı (AFAD / Kandilli - simülasyon)
               </span>
             </div>
 
@@ -802,7 +1185,7 @@
               Afet Koordinat Eşleştirmesi: <span id="flow-step1-city">Hatay / Antakya</span>
             </h3>
             <p style="font-size:12.5px;color:var(--text-muted);line-height:1.5">
-              T.C. İçişleri Bakanlığı AFAD ve Kandilli Rasathanesi verileri ile bankamızdaki ikâmetgâh koordinatlarınız otomatik olarak eşleştirilmiştir.
+              T.C. İçişleri Bakanlığı AFAD ve Kandilli Rasathanesi verileri (simülasyon) ile bankamızdaki ikâmetgâh koordinatlarınız otomatik olarak eşleştirilmiştir.
             </p>
 
             <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px;margin:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
@@ -842,7 +1225,7 @@
                 Adım 2 / 3 · Erteleme Şartları & Güvence
               </span>
               <span class="badge-pill" style="background:rgba(217,83,0,0.15);color:var(--ing-primary);font-weight:700">
-                🛡️ Faizsiz & Cezasız Vade Sonu
+                🛡️ Vade Sonu Erteleme & Cezasız Süreç
               </span>
             </div>
 
@@ -972,29 +1355,43 @@
           </div>
         </div>
 
-        <div class="card-panel-body">
-          
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge-pill" style="background:rgba(217,83,0,0.12);color:var(--ing-primary);font-weight:700">
+                ⚡ Deterministik Ajan Boru Hattı
+              </span>
+              <span id="agent-mode-badge" class="badge-pill" style="background:rgba(100,116,139,0.15);color:#94A3B8;font-weight:600">
+                ⚙️ Mock / Simüle Mod (Gerçekçi LLM Gecikmeli)
+              </span>
+            </div>
+            <div>
+              <button class="btn-action-primary" style="background:#B91C1C;padding:5px 12px;font-size:11.5px" onclick="triggerGuardrailDemo()">
+                🛡️ Guardrail Müdahale Testi (8 Ay → 6 Ay Sınırı)
+              </button>
+            </div>
+          </div>
+
           <!-- 4'LÜ AJAN ÇALIŞMA METRİK PANELİ -->
           <div class="agent-metrics-row">
             <div class="agent-metric-box">
               <div class="agent-metric-title">Toplam İcra Süresi</div>
-              <div class="agent-metric-val" id="stat-agent-latency" style="color:var(--status-green)">1.24 sn</div>
-              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">5 Tool çağrısı toplamı</div>
+              <div class="agent-metric-val" id="stat-agent-latency" style="color:var(--status-green)">1.52 sn</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px" id="stat-latency-desc">4 Tool (kod) + 1 LLM (1.2 sn simüle gecikme)</div>
             </div>
             <div class="agent-metric-box">
-              <div class="agent-metric-title">Tool Başarı Oranı</div>
-              <div class="agent-metric-val" id="stat-agent-success" style="color:var(--status-blue)">5 / 5 OK</div>
-              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Sıfır çalışma hatası</div>
+              <div class="agent-metric-title">Sayısal Değerler</div>
+              <div class="agent-metric-val" style="color:var(--status-blue)">Araçtan / Kodla</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">LLM'e serbest sayı bırakılmaz</div>
             </div>
             <div class="agent-metric-box">
               <div class="agent-metric-title">Kod Guardrail Güvencesi</div>
-              <div class="agent-metric-val" style="color:var(--ing-primary)">Max 6 Ay</div>
-              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Deterministik üst sınır</div>
+              <div class="agent-metric-val" id="stat-guardrail-val" style="color:var(--ing-primary)">Max 6 Ay</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px" id="stat-guardrail-desc">Politika tavan sınırı (varsayım)</div>
             </div>
             <div class="agent-metric-box">
-              <div class="agent-metric-title">Halüsinasyon Riski</div>
-              <div class="agent-metric-val" style="color:var(--status-green)">%0 (Korumalı)</div>
-              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Sayısal değerler kodda</div>
+              <div class="agent-metric-title">Kural Tabanlı Mesaj Denetimi</div>
+              <div class="agent-metric-val" style="color:var(--status-green)" id="stat-msg-audit-val">258 / 258 Temiz</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px" id="stat-msg-audit-desc">faizsiz, ücretsiz, garanti, kesin, mutlaka tarandı → 0 ihlal</div>
             </div>
           </div>
 
@@ -1017,7 +1414,7 @@
           <!-- MİMARİ NOTU -->
           <div style="background:var(--ing-subtle);border:1px solid var(--ing-border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center">
             <div>
-              <strong>Ajan Mimarisi Prensipleri:</strong> Harici karmaşık framework'ler yerine şeffaf ve deterministik özel bir <code>tool-calling</code> döngüsü kullanılır. Erteleme süreleri ve üst sınırlar LLM'in insafına bırakılmaz; <strong>kodda zorlanır</strong>. LLM sadece dil üretimi ve bağlamsal empati için kullanılır.
+              <strong>Ajan Mimarisi Prensipleri:</strong> Harici karmaşık framework'ler yerine şeffaf ve deterministik özel bir <code>tool-calling</code> döngüsü kullanılır. Süreler ve üst sınırlar kodla belirlenir. Yapay zekâ yalnızca müşteriye yazılan metni ve yorumu üretir.
             </div>
           </div>
 
@@ -1101,7 +1498,7 @@
             <div id="playground-result-box" style="display:none;margin-top:14px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;font-size:12px">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
                 <span id="play-result-status" style="font-weight:700;color:var(--status-green)">● Ajan Döngüsü Tamamlandı (4 Adım, 1180 ms)</span>
-                <span id="play-result-plan" style="font-weight:700;color:var(--ing-primary)">Önerilen: 4 Ay Faizsiz Erteleme</span>
+                <span id="play-result-plan" style="font-weight:700;color:var(--ing-primary)">Önerilen: 4 Ay Erteleme Talebi</span>
               </div>
               <div id="play-result-msg" style="font-style:italic;color:var(--text-muted);line-height:1.5;background:var(--bg-surface);border:1px solid var(--border-subtle);padding:8px 12px;border-radius:4px">
               </div>
@@ -1121,7 +1518,7 @@
       <div class="card-panel">
         <div class="card-panel-hdr">
           <span>🛡️ Bankacılık Kuralları & Denetim İzi (Audit Log)</span>
-          <span style="font-size:11px;color:var(--status-green)">Mevzuat & KVKK Güvencesi</span>
+          <span style="font-size:11px;color:var(--status-green)">Banka Politikası & KVKK Güvencesi</span>
         </div>
         <div class="card-panel-body">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
@@ -1300,10 +1697,42 @@
 
         <!-- TAB 1: QR İLE ÖDE / ATM ÇEK -->
         <div id="qr-tab-content-pay">
-          <div style="text-align:center;padding:20px;background:var(--bg-card);border:2px dashed var(--border-subtle);border-radius:8px;margin-bottom:16px;position:relative;overflow:hidden">
-            <div style="font-size:48px;margin-bottom:8px">📷</div>
-            <div style="font-size:13px;font-weight:600;color:var(--text-main)">Kamera QR Tarayıcı Aktif</div>
-            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">ATM ekranındaki veya POS cihazındaki QR kodu kadraja getirin</div>
+          <!-- CANLI KAMERA QR TARAYICI -->
+          <div id="qr-camera-container" style="position:relative;border-radius:12px;overflow:hidden;margin-bottom:16px;background:#000;aspect-ratio:4/3">
+            <video id="qr-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>
+            <!-- Tarama çerçevesi overlay -->
+            <div id="qr-scan-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <div style="width:200px;height:200px;border:3px solid rgba(217,83,0,0.9);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);position:relative">
+                <div style="position:absolute;top:-2px;left:-2px;width:28px;height:28px;border-top:4px solid #D95300;border-left:4px solid #D95300;border-radius:8px 0 0 0"></div>
+                <div style="position:absolute;top:-2px;right:-2px;width:28px;height:28px;border-top:4px solid #D95300;border-right:4px solid #D95300;border-radius:0 8px 0 0"></div>
+                <div style="position:absolute;bottom:-2px;left:-2px;width:28px;height:28px;border-bottom:4px solid #D95300;border-left:4px solid #D95300;border-radius:0 0 0 8px"></div>
+                <div style="position:absolute;bottom:-2px;right:-2px;width:28px;height:28px;border-bottom:4px solid #D95300;border-right:4px solid #D95300;border-radius:0 0 8px 0"></div>
+                <!-- Tarama çizgisi animasyonu -->
+                <div id="qr-scan-line" style="position:absolute;left:8px;right:8px;height:2px;background:linear-gradient(90deg,transparent,#D95300,transparent);top:0;animation:qrScanLine 2s ease-in-out infinite"></div>
+              </div>
+            </div>
+            <!-- Kamera kapalıyken gösterilecek ekran -->
+            <div id="qr-camera-placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-card);gap:12px">
+              <div style="font-size:56px">📷</div>
+              <div style="font-size:14px;font-weight:600;color:var(--text-main)">QR Tarayıcıyı Başlatın</div>
+              <div style="font-size:12px;color:var(--text-muted);max-width:260px;text-align:center">ATM, POS veya fatura üzerindeki QR kodu okutmak için kameranızı açın</div>
+              <button type="button" onclick="startQrScanner()" style="margin-top:8px;padding:10px 24px;background:linear-gradient(135deg,#D95300,#FF6B1A);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:transform 0.15s">
+                📷 Kamerayı Aç
+              </button>
+            </div>
+            <!-- Başarılı tarama sonucu -->
+            <div id="qr-scan-result" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.85);flex-direction:column;align-items:center;justify-content:center;gap:10px">
+              <div style="font-size:48px">✅</div>
+              <div style="font-size:15px;font-weight:700;color:#4ade80">QR Kod Okundu!</div>
+              <div id="qr-result-text" style="font-size:12px;color:#94a3b8;max-width:300px;word-break:break-all;text-align:center;font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.1);padding:8px 14px;border-radius:6px"></div>
+              <button type="button" onclick="resetQrScanner()" style="margin-top:6px;padding:8px 20px;background:#D95300;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">🔄 Tekrar Tara</button>
+            </div>
+          </div>
+
+          <!-- Kamera kontrolleri -->
+          <div id="qr-camera-controls" style="display:none;margin-bottom:16px;display:none;gap:8px">
+            <button type="button" onclick="stopQrScanner()" class="btn-bank-action" style="flex:1;justify-content:center;padding:8px">⏹ Kamerayı Kapat</button>
+            <button type="button" onclick="switchQrCamera()" class="btn-bank-action" style="flex:1;justify-content:center;padding:8px">🔄 Kamerayı Değiştir</button>
           </div>
 
           <div style="font-size:11.5px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">Hızlı Simüle İşlemler:</div>
@@ -1676,6 +2105,68 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 4.8. AFET BAĞIŞI MODALI (AFAD, AKUT, KIZILAY)                   -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div id="modal-donation" class="banking-modal-overlay">
+    <div class="banking-modal-window" style="max-width:500px">
+      <div class="banking-modal-hdr" style="background:linear-gradient(135deg,rgba(217,83,0,0.18),rgba(255,122,26,0.08));border-bottom:1px solid var(--ing-border)">
+        <h3><span>🧡</span> Afet Bölgesi Dayanışma Bağışı</h3>
+        <button onclick="closeBankingModal('modal-donation')" style="background:transparent;border:none;color:var(--text-dim);font-size:18px;cursor:pointer">✕</button>
+      </div>
+      <form onsubmit="submitDonation(event)" class="banking-modal-body">
+        <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;margin-bottom:14px">
+          <div style="font-size:11px;color:var(--text-muted)">GÖNDEREN HESAP & BAKİYE</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+            <span style="font-size:13.5px;font-weight:700;color:var(--text-main)">Vadesiz TL Hesabım</span>
+            <span style="font-size:13px;font-weight:700;color:var(--status-green)" id="donation-balance-disp">₺48.250,00</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">BAĞIŞ YAPILACAK KURUM / FON</label>
+          <select id="donation-org" class="form-input" onchange="updateDonationDetails()">
+            <option value="afad">AFAD — T.C. İçişleri Bakanlığı Afet Fonu</option>
+            <option value="akut">AKUT — Arama Kurtarma Derneği</option>
+            <option value="kizilay">Türk Kızılay — Afet Beslenme ve İnsani Yardım</option>
+            <option value="rize_sel">Rize Valiliği — Sel & Heyelan Acil Destek Fonu</option>
+          </select>
+        </div>
+
+        <div style="background:rgba(217,83,0,0.08);border:1px solid rgba(217,83,0,0.25);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:11.5px" id="donation-info-box">
+          <div style="font-weight:600;color:var(--ing-primary);margin-bottom:2px" id="donation-org-name">AFAD Afet ve Acil Durum Yönetimi</div>
+          <div style="color:var(--text-muted);font-family:'JetBrains Mono',monospace" id="donation-org-iban">TR73 0001 0017 4555 5555 5550 01 (T.C. Ziraat Bankası)</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">BAĞIŞ TUTARI (TL)</label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
+            <button type="button" class="btn-bank-action" onclick="setDonationAmount(100)">100 ₺</button>
+            <button type="button" class="btn-bank-action" onclick="setDonationAmount(250)">250 ₺</button>
+            <button type="button" class="btn-bank-action" onclick="setDonationAmount(500)">500 ₺</button>
+            <button type="button" class="btn-bank-action" onclick="setDonationAmount(1000)">1.000 ₺</button>
+          </div>
+          <input type="number" id="donation-amount" class="form-input" placeholder="Tutar girin (Örn: 500)" min="10" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">AÇIKLAMA / BAĞIŞ NOTU (OPSİYONEL)</label>
+          <input type="text" id="donation-note" class="form-input" placeholder="Örn: Afet Bölgesi Yardımı - Selma Kaya" />
+        </div>
+
+        <div style="margin:10px 0;font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+          <span style="color:var(--status-green);font-weight:700">✓</span>
+          <span>Liman Bankası afet bağışlarında <strong>0 TL transfer ücreti (EFT/FAST masrafsız)</strong> uygular.</span>
+        </div>
+
+        <div class="banking-modal-footer" style="padding:14px 0 0;margin-top:14px">
+          <button type="button" onclick="closeBankingModal('modal-donation')" class="btn-bank-action">Vazgeç</button>
+          <button type="submit" class="btn-action-primary" style="padding:9px 18px;background:var(--ing-primary)">🧡 Bağışı Tamamla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
   <!-- 5. AFET SOHBET KATMANI (AJAN C - KİŞİSELLEŞTİRİLMİŞ SOHBET AJANI)-->
   <!-- ════════════════════════════════════════════════════════════════ -->
   <div id="afet-chat-modal" class="chat-modal-overlay">
@@ -1692,7 +2183,7 @@
               <span class="badge-pill" style="background:var(--status-blue-bg);color:var(--status-blue);border:1px solid var(--status-blue-border);font-size:10px">Ajan C · Sohbet Katmanı</span>
             </div>
             <div style="font-size:11px;color:var(--text-muted)" id="chat-hdr-sub">
-              Bağlam Yüklendi: Hatice Hanım · Konut Kredisi · 4 Ay Faizsiz
+              Bağlam Yüklendi: Hatice Hanım · Konut Kredisi · 4 Ay Erteleme Talebi
             </div>
           </div>
         </div>
@@ -1745,8 +2236,8 @@
         <div style="font-size:11px;color:var(--text-muted);font-weight:600">
           Karar İnsanda:
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn-decision-approve" style="padding:7px 14px;font-size:12px" onclick="approvePlanFromChat()">
+        <div id="chat-bottom-actions-box" style="display:flex;gap:8px">
+          <button class="btn-decision-approve" id="btn-chat-approve" style="padding:7px 14px;font-size:12px" onclick="approvePlanFromChat()">
             ✓ Planı Onayla
           </button>
           <button class="btn-decision-escalate" style="padding:7px 12px;font-size:12px" onclick="openEscalateFromChat()">
@@ -1755,6 +2246,163 @@
           <button class="btn-decision-optout" style="padding:7px 12px;font-size:11.5px" onclick="optOutPlanFromChat()">
             ✕ Vazgeç (Normal Öde)
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 6. GELEN SMS PUSH BİLDİRİMİ (AKILLI TELEFON TOAST)               -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div id="phone-sms-toast" class="phone-sms-toast" style="display:none">
+    <div class="sms-toast-header">
+      <div style="display:flex;align-items:center;gap:7px">
+        <div class="sms-toast-icon">💬</div>
+        <span style="font-size:11px;font-weight:700;color:#F8FAFC;letter-spacing:0.02em">MESAJLAR</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.5)">·</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.7)">Şimdi</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="sms-net-badge">TURKCELL 5G</span>
+        <button onclick="dismissSmsToast()" class="sms-close-btn" title="Bildirimi Kapat">✕</button>
+      </div>
+    </div>
+
+    <div class="sms-toast-sender-row">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="sms-brand-tag">LIMAN BANK</span>
+        <span style="color:#22C55E;font-size:11px" title="Doğrulanmış Banka Göndericisi">✓</span>
+      </div>
+      <span id="sms-toast-phone" style="font-size:10.5px;color:var(--text-dim);font-family:'JetBrains Mono'">0532 *** 12 84</span>
+    </div>
+
+    <!-- SIFIR BAĞLANTI (ANTI-PHISHING) ROZETİ -->
+    <div style="margin:4px 0 8px;padding:5px 8px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:10px;color:#FDE68A;display:flex;align-items:center;gap:6px">
+      <span>🛡️</span>
+      <span><strong>Bilinçli Güvenlik Tasarımı:</strong> Dolandırıcılığı önlemek için SMS'te ASLA link gönderilmez.</span>
+    </div>
+
+    <div class="sms-toast-bubble" id="sms-toast-text">
+      Sayın Selma Hanım, bölgenizde meydana gelen deprem felaketi sebebiyle geçmiş olsun dileklerimizi iletiyoruz. Liman Bankası olarak yanınızdayız. Konut krediniz için 3 aylık faizsiz erteleme planınız hazırlanmıştır. Onay için Liman Mobil uygulamasını açın. Uygulamayı açamıyorsanız bu mesaja EVET yazarak yanıtlayabilir veya 0850 222 0 600 Afet Destek Hattımızı arayabilirsiniz. Liman Bank B002
+    </div>
+
+    <div class="sms-toast-actions">
+      <button class="sms-btn-action primary" onclick="handleSmsOpenAction()">
+        <span>📱</span> Liman Mobil'i Aç & İncele
+      </button>
+      <button class="sms-btn-action" onclick="openPhoneModal()">
+        <span>📲</span> Mesaj Yanıtla (EVET)
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 7. AKILLI TELEFON CİHAZ MODALI (TAM SİMÜLE TELEFON EKRANI)      -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div id="modal-phone-device" class="banking-modal-overlay">
+    <div class="phone-modal-wrapper">
+      <div class="phone-device-shell">
+        <!-- Dynamic Island / Kamera -->
+        <div class="phone-dynamic-island">
+          <div class="phone-island-cam"></div>
+          <div class="phone-island-sensor"></div>
+        </div>
+
+        <div class="phone-screen">
+          <!-- Üst Durum Çubuğu -->
+          <div class="phone-top-bar">
+            <span id="phone-clock">04:17</span>
+            <div style="display:flex;gap:5px;align-items:center">
+              <span style="font-size:10px">5G</span>
+              <span>📶</span>
+              <span>🔋 94%</span>
+            </div>
+          </div>
+
+          <!-- Mesajlar Uygulaması Başlığı -->
+          <div class="phone-app-hdr">
+            <button onclick="closePhoneModal()" style="background:transparent;border:none;color:#38BDF8;font-size:12px;cursor:pointer">
+              ‹ Mesajlar
+            </button>
+            <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:center">
+              <div class="phone-avatar">LB</div>
+              <div>
+                <div style="font-weight:700;font-size:12px;color:#F8FAFC;display:flex;align-items:center;gap:4px">
+                  LIMAN BANK <span style="color:#22C55E;font-size:10px">✓</span>
+                </div>
+                <div style="font-size:10px;color:#94A3B8">Kurumsal SMS (3340)</div>
+              </div>
+            </div>
+            <button onclick="closePhoneModal()" style="background:transparent;border:none;color:#94A3B8;cursor:pointer;font-size:13px">
+              ✕
+            </button>
+          </div>
+
+          <!-- JÜRİ / SUNUM GÜVENLİK ROZETİ (ANTI-PHISHING DESIGN) -->
+          <div style="background:#0F172A;border-bottom:1px solid rgba(245,158,11,0.25);padding:7px 12px;font-size:10px;color:#CBD5E1;line-height:1.4">
+            <div style="display:flex;align-items:center;gap:5px;color:#F59E0B;font-weight:700">
+              <span>🛡️</span> Bilinçli Güvenlik Tasarımı (Zero-Link / Anti-Phishing)
+            </div>
+            <div style="color:#94A3B8;font-size:9.5px;margin-top:2px">
+              Dolandırıcılığı önlemek için SMS'te <strong>bağlantı gönderilmez</strong>. Onay için <strong>Liman Mobil</strong> açılır; uygulamayı açamayanlar ise alttan <strong>EVET</strong> yanıtlayabilir veya <strong>0850</strong> hattını arayabilir.
+            </div>
+          </div>
+
+          <!-- Mesaj Gövdesi -->
+          <div class="phone-msg-body" id="phone-msg-stream">
+            <div style="text-align:center;font-size:10px;color:#64748B;margin:4px 0">
+              Dün 14:32
+            </div>
+            <div class="phone-bubble old">
+              Liman Dijital Bankacılık tek kullanımlık SMS onay kodunuz: <strong>849201</strong>. Bu kodu personelimiz dahil kimseyle paylaşmayınız. B002
+            </div>
+
+            <div style="text-align:center;font-size:10px;color:#64748B;margin:8px 0" id="phone-sms-time-badge">
+              Bugün (Afet Anı) · Şimdi
+            </div>
+            <div class="phone-bubble new" id="phone-device-bubble">
+              Sayın Selma Hanım, bölgenizde yaşanan afet sebebiyle geçmiş olsun dileklerimizi iletiyoruz. Liman Bankası olarak yanınızdayız. Mevcut Konut Krediniz için 3 aylık faizsiz erteleme planınız hazırlanmıştır.<br><br>
+              <strong>Onay için Liman Mobil uygulamasını açın.</strong><br><br>
+              <span style="color:#94A3B8;font-size:10.5px">Uygulamayı açamıyorsanız bu mesaja <strong>EVET</strong> yazarak yanıtlayabilir veya <strong>0850 222 0 600</strong> Afet Destek Masamızı arayabilirsiniz.</span>
+              <div style="font-size:9.5px;color:rgba(255,255,255,0.6);margin-top:8px;text-align:right">
+                Liman Bank B002
+              </div>
+            </div>
+          </div>
+
+          <!-- HIZLI YANIT ÇİPLERİ (EVET & 0850 ARAMA) -->
+          <div style="padding:4px 10px;background:#0B132B;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:6px;align-items:center;overflow-x:auto">
+            <button onclick="quickSendSmsReply('EVET')" style="background:rgba(34,197,94,0.18);border:1px solid rgba(34,197,94,0.4);color:#4ADE80;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap">
+              <span>💬</span> "EVET" Yanıtla
+            </button>
+            <button onclick="quickCallAfetDesk()" style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38BDF8;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap">
+              <span>📞</span> 0850 222 0 600 Ara
+            </button>
+            <button onclick="handleSmsOpenAction()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#F8FAFC;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap">
+              <span>📱</span> Liman Mobil'i Aç
+            </button>
+          </div>
+
+          <!-- Alt Mesaj Yazma Çubuğu (ETKİLEŞİMLİ SMS YANITI) -->
+          <form class="phone-input-bar" onsubmit="event.preventDefault(); sendSmsReply();">
+            <input 
+              type="text" 
+              id="phone-sms-reply-input" 
+              placeholder="SMS yanıtı yazın (Örn: EVET)..." 
+              style="flex:1;background:#1E293B;border:1px solid rgba(255,255,255,0.18);border-radius:18px;padding:7px 12px;font-size:11.5px;color:#fff;outline:none" 
+              autocomplete="off"
+            />
+            <button 
+              type="submit" 
+              title="SMS Gönder" 
+              style="background:var(--ing-primary);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.15s"
+            >
+              ↑
+            </button>
+          </form>
+
+          <!-- Home Indicator -->
+          <div class="phone-home-indicator"></div>
         </div>
       </div>
     </div>
@@ -1770,6 +2418,8 @@
   <!-- 5. UYGULAMA JAVASCRIPT MOTORU                                    -->
   <!-- ════════════════════════════════════════════════════════════════ -->
 
+  <!-- HTML5 QR Scanner Kütüphanesi (Kamera ile QR Okuma) -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <!-- API İstemcisi & Canlı SSE Veri Akışı (FastAPI Uç Noktaları) -->
   <script src="js/api-client.js?v=2.6"></script>
   <!-- Veri Katmanı: Müşteri Profilleri, Afet İzi ve Ajan Simülasyon Verileri -->

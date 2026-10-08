@@ -1,0 +1,4095 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liman Bankası — Afet Destek Modu & Otonom Ajan Sistemi</title>
+  <!-- Liman Bankası (LB) Sekme Amblemi (Favicon) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='lb-grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23FF7A1A'/%3E%3Cstop offset='100%25' stop-color='%23D95300'/%3E%3C/defs%3E%3ClinearGradient id='bg-grad' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%231A202C'/%3E%3Cstop offset='100%25' stop-color='%230B0D13'/%3E%3C/defs%3E%3Crect x='2' y='2' width='60' height='60' rx='14' fill='url(%23bg-grad)' stroke='%23D95300' stroke-width='2.5'/%3E%3Cpath d='M16 48 C 24 45, 40 45, 48 48' stroke='%23D95300' stroke-width='2.5' stroke-linecap='round' fill='none' opacity='0.8'/%3E%3Ccircle cx='32' cy='14' r='3.5' fill='%23FF7A1A'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-family='-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif' font-weight='900' font-size='24' letter-spacing='1'%3E%3Ctspan fill='%23FFFFFF'%3EL%3C/tspan%3E%3Ctspan fill='url(%23lb-grad)'%3EB%3C/tspan%3E%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* MAT VE DİNGİN AFET BANKACILIĞI RENK PALETİ */
+    :root {
+      --ing-primary: #D95300;      /* Mat, sakin ING turuncusu */
+      --ing-accent: #B84300;
+      --ing-subtle: rgba(217, 83, 0, 0.08);
+      --ing-border: rgba(217, 83, 0, 0.25);
+      
+      --bg-base: #0B0D12;          /* Koyu antrasit zemin */
+      --bg-surface: #12151C;       /* Kart ve panel zemini */
+      --bg-card: #181C26;          /* İç kartlar */
+      --bg-card-hover: #1F2432;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-hover: rgba(255, 255, 255, 0.12);
+      
+      --text-main: #E2E8F0;        /* Yumuşak beyaz */
+      --text-muted: #8E9BAE;       /* Açıklama ve etiketler */
+      --text-dim: #505A69;         /* Çok silik meta veriler */
+      
+      --status-green: #2E9E68;     /* Göz yormayan yeşil */
+      --status-green-bg: rgba(46, 158, 104, 0.1);
+      --status-blue: #3E7BCE;      /* Dingin mavi */
+      --status-blue-bg: rgba(62, 123, 206, 0.1);
+      --status-amber: #C98A2C;     /* Yumuşak kehribar */
+      --status-amber-bg: rgba(201, 138, 44, 0.1);
+      --status-red: #C54E4E;       /* Mat kırmızı */
+      --status-red-bg: rgba(197, 78, 78, 0.1);
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    /* ─── GİRİŞ EKRANI (LOGIN OVERLAY) ─── */
+    #login-view {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 20%, #151A24 0%, #0B0D12 75%);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-container {
+      max-width: 440px;
+      width: 100%;
+    }
+    .login-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--ing-subtle);
+      border: 1px solid var(--ing-border);
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+    }
+    .login-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+    .login-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+    .login-tab-btn {
+      flex: 1;
+      padding: 9px;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .login-tab-btn.active {
+      background: var(--ing-primary);
+      color: white;
+    }
+
+    /* ING'Lİ OL YUKARI-AŞAĞI KAYDIRILABİLİR KAPSAYICI */
+    .reg-scroll-container {
+      max-height: 380px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      padding-right: 8px;
+    }
+    .reg-scroll-container::-webkit-scrollbar {
+      width: 5px;
+    }
+    .reg-scroll-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+    .reg-scroll-container::-webkit-scrollbar-thumb {
+      background: var(--ing-primary);
+      border-radius: 4px;
+    }
+
+    /* YUKARI-AŞAĞI HAREKET EDEN YÜZEN ANİMASYON (FLOATING MOTION) */
+    .floating-scroll-banner {
+      animation: floatUpDown 2.2s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--ing-subtle);
+      border: 1px dashed var(--ing-border);
+      color: var(--ing-primary);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .floating-scroll-banner:hover {
+      background: rgba(217, 83, 0, 0.14);
+    }
+    @keyframes floatUpDown {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .form-group {
+      margin-bottom: 13px;
+      text-align: left;
+    }
+    .form-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus {
+      border-color: var(--ing-primary);
+    }
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .password-wrap input {
+      padding-right: 40px;
+    }
+    .toggle-pwd-btn {
+      position: absolute;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+    }
+    .toggle-pwd-btn:hover { color: var(--text-main); }
+
+    .demo-role-btn {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-main);
+      transition: all 0.16s ease;
+    }
+    .demo-role-btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--ing-border);
+      transform: translateY(-1px);
+    }
+
+    /* ─── ÜST NAVBAR ─── */
+    header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-badge {
+      background: var(--ing-primary);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.02em;
+    }
+    .brand-text h1 {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    .brand-text span {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-card);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+    .tab-btn {
+      padding: 7px 16px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+    .tab-btn.active {
+      color: #FFFFFF;
+      background: var(--ing-primary);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+    .logout-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 4px;
+    }
+    .logout-btn:hover { color: var(--text-main); }
+
+    /* ─── ANA ALAN ─── */
+    main {
+      flex: 1;
+      max-width: 1380px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    /* ─── YENİ AFET KONTROL BARI & CANLI İLERLEME ─── */
+    .disaster-ctrl {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .disaster-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--status-red);
+      background: var(--status-red-bg);
+      border: 1px solid rgba(197, 78, 78, 0.25);
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .btn-action-primary {
+      background: var(--ing-primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .btn-action-primary:hover {
+      background: var(--ing-accent);
+    }
+
+    /* İlerleme Çubuğu (Simülasyonda dolar) */
+    .pipeline-progress-box {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-top: 12px;
+      display: none;
+    }
+    .progress-bar-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--ing-primary);
+      transition: width 0.3s ease;
+    }
+
+    /* ─── DÜŞEN YENİ AFET BİLDİRİM BANNERI (RİZE SEL) ─── */
+    .disaster-drop-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.32) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      border-radius: var(--radius-md);
+      padding: 16px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 12px 32px -8px rgba(37, 99, 235, 0.35);
+      animation: dropAlertAnim 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes dropAlertAnim {
+      0% { opacity: 0; transform: translateY(-24px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .badge-rize-flood {
+      background: rgba(77, 123, 176, 0.18);
+      color: #A9C2E3;
+      border: 1px solid rgba(126, 165, 217, 0.3);
+    }
+
+    /* ─── SAYAÇ KARTLARI ─── */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+    }
+    .metric-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .metric-num {
+      font-size: 26px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-main);
+      margin: 6px 0 2px;
+    }
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* ─── DÜZEN ÇİFT SÜTUN ─── */
+    .layout-cols {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 990px) {
+      .layout-cols { grid-template-columns: 1fr; }
+    }
+
+    .card-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .card-panel-hdr {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+    .card-panel-body {
+      padding: 18px;
+    }
+
+    /* MÜŞTERİ KARTLARI */
+    .cust-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 15px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .cust-card:hover {
+      border-color: var(--border-hover);
+    }
+    .cust-card.active-cust {
+      border-color: var(--ing-border);
+      background: rgba(217, 83, 0, 0.03);
+    }
+    .badge-pill {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* EVENT FEED */
+    .event-feed {
+      height: 380px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+    .event-entry {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 5px;
+      padding: 10px 12px;
+      line-height: 1.5;
+    }
+
+    /* ─── GÜÇLENDİRİLMİŞ AJAN STÜDYOSU (AGENT STEPS) ─── */
+    .agent-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .agent-step-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      position: relative;
+    }
+    .agent-step-item.executing {
+      border-color: var(--ing-primary);
+      background: rgba(217, 83, 0, 0.04);
+    }
+    .step-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 6px;
+    }
+    .step-code {
+      background: #090B0F;
+      border: 1px solid var(--border-subtle);
+      border-radius: 5px;
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      margin-top: 8px;
+      color: #94A3B8;
+      overflow-x: auto;
+      position: relative;
+    }
+    .step-cot-box {
+      background: rgba(30, 41, 59, 0.35);
+      border-left: 3px solid #7EA5D9;
+      padding: 8px 12px;
+      border-radius: 0 4px 4px 0;
+      font-size: 11.5px;
+      color: #CBD5E1;
+      margin: 8px 0 6px;
+      line-height: 1.5;
+    }
+    .step-guardrail-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #3DAF7E;
+      background: rgba(46, 158, 104, 0.12);
+      border: 1px solid rgba(46, 158, 104, 0.25);
+      border-radius: 4px;
+      padding: 3px 8px;
+      margin-top: 6px;
+    }
+    .step-copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #CBD5E1;
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .step-copy-btn:hover {
+      background: var(--ing-primary);
+      color: white;
+    }
+    .agent-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .agent-metric-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    .agent-metric-title {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .agent-metric-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-top: 4px;
+    }
+    .agent-filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .agent-filter-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .agent-filter-btn:hover {
+      color: #FFFFFF;
+      border-color: var(--border-hover);
+    }
+    .agent-filter-btn.active {
+      background: rgba(217, 83, 0, 0.15);
+      border-color: var(--ing-primary);
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+    .agent-playground {
+      background: linear-gradient(135deg, rgba(24, 28, 38, 0.9) 0%, rgba(18, 21, 28, 0.95) 100%);
+      border: 1px solid var(--ing-border);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-top: 20px;
+    }
+
+    /* ─── NORMAL BANKACILIK ARAYÜZÜ (ING DİJİTAL BANKACILIK) ─── */
+    .banking-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .banking-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 22px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .banking-user-info h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 2px;
+    }
+    .banking-user-info span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .banking-ribbon {
+      background: linear-gradient(135deg, rgba(217, 83, 0, 0.12) 0%, rgba(24, 28, 38, 0.7) 100%);
+      border: 1px solid var(--ing-border);
+      border-left: 4px solid var(--ing-primary);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: dropAlertAnim 0.35s ease;
+    }
+    .banking-ribbon.confirmed {
+      background: linear-gradient(135deg, rgba(46, 158, 104, 0.12) 0%, rgba(24, 28, 38, 0.7) 100%);
+      border-color: rgba(46, 158, 104, 0.35);
+      border-left-color: var(--status-green);
+    }
+    .banking-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+    }
+    .banking-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .banking-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    }
+    .banking-card-hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .banking-card-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .banking-balance {
+      font-size: 26px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .banking-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-bank-action {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-bank-action:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      color: #FFFFFF;
+    }
+    .btn-bank-action.primary {
+      background: var(--ing-primary);
+      border-color: var(--ing-primary);
+      color: #FFFFFF;
+    }
+    .btn-bank-action.primary:hover {
+      background: var(--ing-accent);
+    }
+    .loan-afet-box {
+      margin-top: 14px;
+      background: rgba(217, 83, 0, 0.05);
+      border: 1px dashed var(--ing-border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tx-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12.5px;
+    }
+    .tx-item:last-child {
+      border-bottom: none;
+    }
+
+    /* ─── AFET MODU AKIŞ MODALI (EMBEDDED FLOW WIZARD) ─── */
+    .afet-flow-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+      z-index: 2500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .afet-flow-overlay.active {
+      display: flex !important;
+    }
+    .afet-flow-window {
+      background: var(--bg-surface);
+      border: 1px solid var(--ing-border);
+      border-radius: var(--radius-lg);
+      max-width: 660px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: dropAlertAnim 0.3s ease;
+    }
+    .afet-flow-hdr {
+      background: linear-gradient(90deg, #181C26 0%, #12151C 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 16px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .flow-stepper {
+      display: flex;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 18px;
+      gap: 12px;
+      font-size: 11.5px;
+      overflow-x: auto;
+    }
+    .flow-step-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .flow-step-pill:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+    .flow-step-pill.active {
+      color: #FFFFFF;
+      font-weight: 600;
+      background: rgba(217, 83, 0, 0.18);
+      border: 1px solid var(--ing-border);
+    }
+    .flow-step-pill.completed {
+      color: var(--status-green);
+      background: rgba(46, 158, 104, 0.12);
+      border: 1px solid rgba(46, 158, 104, 0.3);
+    }
+    .btn-step-nav {
+      background: #181C26;
+      border: 1px solid var(--border-hover);
+      color: var(--text-main);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-step-nav:hover {
+      border-color: var(--ing-primary);
+      color: #FFFFFF;
+    }
+    .msg-quote {
+      background: rgba(0,0,0,0.3);
+      border-left: 3px solid var(--ing-primary);
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      font-size: 13.5px;
+      color: #CBD5E1;
+      font-style: italic;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+    .btn-approve {
+      flex: 2;
+      background: var(--ing-primary);
+      color: white;
+      border: none;
+      padding: 13px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-approve:hover { background: var(--ing-accent); }
+    .btn-escalate {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border-hover);
+      color: var(--text-main);
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    /* ─── 3 KARAR BUTONLARI (ONAYLA · TEMSİLCİ · SORUM VAR / VAZGEÇ) ─── */
+    .decision-row-3 {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+    }
+    .btn-decision-approve {
+      background: var(--ing-primary);
+      color: white;
+      border: none;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-decision-approve:hover { background: var(--ing-accent); }
+    .btn-decision-escalate {
+      background: rgba(157, 139, 201, 0.12);
+      border: 1px solid rgba(157, 139, 201, 0.3);
+      color: #B3A4DB;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-decision-escalate:hover { background: rgba(157, 139, 201, 0.2); }
+    .btn-decision-chat {
+      background: rgba(77, 123, 176, 0.12);
+      border: 1px solid rgba(77, 123, 176, 0.3);
+      color: #8EB4E3;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-decision-chat:hover { background: rgba(77, 123, 176, 0.2); }
+    .btn-decision-optout {
+      background: transparent;
+      border: 1px solid var(--border-hover);
+      color: var(--text-muted);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .btn-decision-optout:hover { background: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+
+    /* ─── SOHBET KATMANI MODALI (AJAN C - SOHBET AJANI) ─── */
+    .chat-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 2600;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .chat-modal-overlay.active {
+      display: flex !important;
+    }
+    .chat-modal-window {
+      background: var(--bg-surface);
+      border: 1px solid var(--ing-border);
+      border-radius: var(--radius-lg);
+      max-width: 680px;
+      width: 100%;
+      height: 640px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+      overflow: hidden;
+      animation: dropAlertAnim 0.3s ease;
+    }
+    .chat-hdr {
+      background: linear-gradient(90deg, #181C26 0%, #12151C 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-context-banner {
+      background: rgba(217, 83, 0, 0.08);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 18px;
+      font-size: 11px;
+      color: #CBD5E1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .chat-body {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chat-bubble {
+      max-width: 82%;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .chat-bubble.assistant {
+      align-self: flex-start;
+      background: #181C26;
+      border: 1px solid var(--border-subtle);
+      color: #E2E8F0;
+      border-bottom-left-radius: 2px;
+    }
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: var(--ing-primary);
+      color: #FFFFFF;
+      border-bottom-right-radius: 2px;
+    }
+    .chat-chips-scroll {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .chat-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      color: #94A3B8;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .chat-chip:hover {
+      background: rgba(217, 83, 0, 0.15);
+      border-color: var(--ing-primary);
+      color: #FFFFFF;
+    }
+    .chat-input-bar {
+      padding: 12px 16px;
+      background: var(--bg-surface);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .chat-bottom-decisions {
+      background: #090B0F;
+      border-top: 1px solid var(--border-subtle);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 14px 24px;
+      font-size: 11.5px;
+      color: var(--text-dim);
+      text-align: center;
+      background: var(--bg-surface);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 1. GİRİŞ EKRANI (İLK AÇILIŞ VE ROL SEÇİMİ)                      -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div id="login-view">
+    <div class="login-container">
+      <div style="text-align:center;margin-bottom:24px">
+        <div class="login-logo">
+          <span style="font-size:18px">🚨</span>
+          <span style="font-weight:700;color:var(--ing-primary);font-size:15px">Afet Modu</span>
+          <span style="color:var(--text-dim);font-size:12px">| Liman Bankası</span>
+        </div>
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:6px">Liman İnternet Bankacılığı</h2>
+        <p style="font-size:13px;color:var(--text-muted)">
+          Afet Modu Öncelikli Destek ve Müşteri Portalı
+        </p>
+      </div>
+
+      <div class="login-card">
+        <!-- GİRİŞ / LİMANLI OL TABLARI -->
+        <div class="login-tabs">
+          <button class="login-tab-btn active" id="btn-login-tab" onclick="switchLoginMode('login')">
+            🔑 Giriş Yap
+          </button>
+          <button class="login-tab-btn" id="btn-register-tab" onclick="switchLoginMode('register')">
+            🧡 Limanlı Ol (Kayıt)
+          </button>
+        </div>
+
+        <!-- 1. GİRİŞ YAP FORMU (ŞİFRELİ) -->
+        <div id="form-login-box">
+          <form onsubmit="handleFormLogin(event)">
+            <div class="form-group">
+              <label class="form-label">T.C. KİMLİK NO VEYA E-POSTA</label>
+              <input type="text" id="login-identifier" class="form-input" placeholder="hatice@demo.com" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">İNTERNET BANKACILIĞI ŞİFRESİ</label>
+              <div class="password-wrap">
+                <input type="password" id="login-password" class="form-input" placeholder="••••••••" required />
+                <button type="button" class="toggle-pwd-btn" onclick="togglePassword('login-password', this)">👁</button>
+              </div>
+            </div>
+
+            <div id="login-error-msg" style="display:none;color:#FCA5A5;background:var(--status-red-bg);border:1px solid rgba(197,78,78,0.3);padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:12px">
+            </div>
+
+            <button type="submit" class="btn-action-primary" style="width:100%;justify-content:center;padding:12px;margin-top:4px">
+              Güvenli Giriş Yap
+            </button>
+          </form>
+
+          <!-- HIZLI DEMO DOLDURUCU -->
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)">
+            <div style="font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between">
+              <span>Hızlı Demo Seçimi</span>
+              <span style="color:var(--ing-primary)">Şifre: demo1234</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <button class="demo-role-btn" onclick="fillAndLogin('hatice@demo.com', 'demo1234', 'customer', 'hatice')">
+                <div>
+                  <div style="font-weight:600;font-size:12px">👵 Hatice Hanım</div>
+                  <div style="font-size:10px;color:var(--text-muted)">Afetzede (Konut)</div>
+                </div>
+              </button>
+              <button class="demo-role-btn" onclick="fillAndLogin('emre@demo.com', 'demo1234', 'customer', 'emre')">
+                <div>
+                  <div style="font-weight:600;font-size:12px">👨 Emre Bey</div>
+                  <div style="font-size:10px;color:var(--text-muted)">Afetzede (İhtiyaç)</div>
+                </div>
+              </button>
+              <button class="demo-role-btn" style="border-color:rgba(59,130,246,0.4)" onclick="fillAndLogin('dursun@demo.com', 'demo1234', 'customer', 'dursun')">
+                <div>
+                  <div style="font-weight:600;font-size:12px;color:#7EA5D9">🌊 Dursun Ali Reis</div>
+                  <div style="font-size:10px;color:var(--text-muted)">Rize Sel Afeti (69y)</div>
+                </div>
+              </button>
+              <button class="demo-role-btn" onclick="fillAndLogin('calisan@demo.com', 'demo1234', 'staff', null)">
+                <div>
+                  <div style="font-weight:600;font-size:12px">🏦 Banka Çalışanı</div>
+                  <div style="font-size:10px;color:var(--text-muted)">Operasyon</div>
+                </div>
+              </button>
+              <button class="demo-role-btn" onclick="fillAndLogin('admin@demo.com', 'demo1234', 'admin', null)">
+                <div>
+                  <div style="font-weight:600;font-size:12px">⚙️ Sistem Admin</div>
+                  <div style="font-size:10px;color:var(--text-muted)">Tam Yetki</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. LİMANLI OL (KAYIT OL) FORMU -->
+        <div id="form-register-box" style="display:none">
+          <!-- YUKARI AŞAĞI HAREKET EDEN YÜZEN İPUCU BARI -->
+          <div class="floating-scroll-banner" onclick="scrollRegister('toggle')">
+            <span style="display:flex;align-items:center;gap:6px">
+              <span>↕️</span> Formu İnceleyin
+            </span>
+            <span id="scroll-direction-hint" style="font-size:11px;opacity:0.85">Aşağı Kaydır ↓</span>
+          </div>
+
+          <form onsubmit="handleFormRegister(event)">
+            <!-- YUKARI-AŞAĞI KAYDIRILABİLİR ALAN -->
+            <div class="reg-scroll-container" id="reg-scroll-container" onscroll="handleScrollUpdate()">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="form-group">
+                  <label class="form-label">AD</label>
+                  <input type="text" id="reg-name" class="form-input" placeholder="Ayşe" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">SOYAD</label>
+                  <input type="text" id="reg-surname" class="form-input" placeholder="Kaya" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">T.C. KİMLİK NO</label>
+                <input type="text" id="reg-tckn" class="form-input" placeholder="11 haneli T.C. No" maxlength="11" required />
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="form-group">
+                  <label class="form-label">YAŞ</label>
+                  <input type="number" id="reg-age" class="form-input" placeholder="68" min="18" max="99" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">İKÂMET İLİ</label>
+                  <select id="reg-city" class="form-input" required>
+                    <option value="Rize">Rize (Sel & Heyelan Afet Bölgesi)</option>
+                    <option value="Hatay">Hatay (Afet Bölgesi)</option>
+                    <option value="Kahramanmaraş">Kahramanmaraş (Afet Bölgesi)</option>
+                    <option value="Malatya">Malatya (Afet Bölgesi)</option>
+                    <option value="Adıyaman">Adıyaman (Afet Bölgesi)</option>
+                    <option value="Gaziantep">Gaziantep (Afet Bölgesi)</option>
+                    <option value="İstanbul">İstanbul</option>
+                    <option value="Ankara">Ankara</option>
+                    <option value="İzmir">İzmir</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">E-POSTA ADRESİ</label>
+                <input type="email" id="reg-email" class="form-input" placeholder="ornek@musteri.com" required />
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="form-group">
+                  <label class="form-label">KREDİ TÜRÜ</label>
+                  <select id="reg-loan" class="form-input">
+                    <option value="konut">Konut Kredisi</option>
+                    <option value="ihtiyac">İhtiyaç Kredisi</option>
+                    <option value="kart">Kredi Kartı</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">DASK DURUMU</label>
+                  <select id="reg-dask" class="form-input">
+                    <option value="true">DASK Poliçem Var</option>
+                    <option value="false">DASK Bulunmuyor</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">GİRİŞ ŞİFRESİ BELİRLEYİN</label>
+                <div class="password-wrap">
+                  <input type="password" id="reg-password" class="form-input" placeholder="En az 6 karakter" minlength="6" required />
+                  <button type="button" class="toggle-pwd-btn" onclick="togglePassword('reg-password', this)">👁</button>
+                </div>
+              </div>
+
+              <div style="margin:12px 0;font-size:11.5px;color:var(--text-muted)">
+                <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+                  <input type="checkbox" id="reg-hassas" style="margin-top:2px" />
+                  <span>65 yaş üstü veya engelli bireyim (Afet Modu Öncelikli Destek Kapsamı)</span>
+                </label>
+              </div>
+
+              <div style="margin:12px 0;font-size:11.5px;color:var(--text-muted)">
+                <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+                  <input type="checkbox" required style="margin-top:2px" />
+                  <span>KVKK Aydınlatma Metni'ni ve Liman Bankası Müşteri Sözleşmesi'ni okudum, onaylıyorum.</span>
+                </label>
+              </div>
+
+              <!-- YUKARI-AŞAĞI HIZLI KAYDIRMA KONTROLLERİ -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin:10px 0 6px;padding:6px 0;border-top:1px solid var(--border-subtle);font-size:11.5px">
+                <button type="button" onclick="scrollRegister('top')" style="background:transparent;border:none;color:var(--ing-primary);cursor:pointer;display:flex;align-items:center;gap:4px">
+                  ↑ Başa Dön
+                </button>
+                <button type="button" onclick="scrollRegister('bottom')" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px">
+                  En Alta Kaydır ↓
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-action-primary" style="width:100%;justify-content:center;padding:12px;margin-top:12px;background:var(--ing-primary)">
+              🧡 Limanlı Ol ve Hesabı Başlat
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 2. ÜST NAVBAR                                                    -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-badge">LB</div>
+      <div class="brand-text">
+        <h1>Liman Dijital Bankacılık</h1>
+        <span>Afet Modu Entegre Deneyimi</span>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" id="tab-cust-btn" onclick="switchTab('customer')">
+        📱 Liman Dijital Bankacılık
+      </button>
+      <button class="tab-btn" id="tab-dash-btn" onclick="switchTab('dashboard')">
+        🏦 Operasyon Konsolu
+      </button>
+      <button class="tab-btn" id="tab-agent-btn" onclick="switchTab('agent')">
+        🤖 Ajan & Tool İzleri
+      </button>
+      <button class="tab-btn" id="tab-audit-btn" onclick="switchTab('audit')">
+        🛡️ Kurallar & Audit Log
+      </button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn-action-primary" style="background:#181C26;border:1px solid var(--border-hover);padding:6px 12px;font-size:12px;color:var(--text-main)" onclick="toggleSimBar()">
+        ⚡ Afet Simülatörü ▾
+      </button>
+      <div class="user-pill">
+        <span id="active-user-badge">👤 Hatice Hanım</span>
+        <button class="logout-btn" onclick="openLogin()">Değiştir ⎋</button>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 3. ANA GÖVDE                                                    -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <main>
+
+    <!-- DÜŞEN YENİ AFET BİLDİRİMİ (RİZE SEL & HEYELAN) -->
+    <div id="disaster-drop-banner" class="disaster-drop-banner">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:46px;height:46px;border-radius:12px;background:rgba(37,99,235,0.25);border:1px solid rgba(96,165,250,0.45);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">
+            🌊
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="badge-pill badge-rize-flood" style="font-weight:700">🚨 YENİ AFET SİSTEME DÜŞTÜ</span>
+              <span style="font-size:11.5px;color:#93C5FD">Meteoroloji Genel Müdürlüğü & AFAD · Kırmızı Kod Uyarısı</span>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;color:#F8FAFC;margin:0 0 4px">
+              Rize Şiddetli Yağış, Sel ve Heyelan Felaketi (Doğu Karadeniz Havzası)
+            </h3>
+            <p style="font-size:12px;color:#CBD5E1;margin:0;line-height:1.5">
+              Çayeli, Ardeşen, Fındıklı, Güneysu ve İkizdere taşkın koordinatlarında <strong>5 yeni etkilenen Liman Bankası müşterisi</strong> doğrudan tespit edildi ve operasyon kuyruğuna aktarıldı.
+            </p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="text-align:right;background:rgba(0,0,0,0.25);padding:6px 14px;border-radius:6px;border:1px solid rgba(96,165,250,0.25)">
+            <div style="font-size:10.5px;color:#93C5FD;text-transform:uppercase;font-weight:600">Etkilenen Müşteri Artışı</div>
+            <div style="font-size:17px;font-weight:800;color:#7EA5D9">+5 Kişi (258 → 263)</div>
+          </div>
+          <button onclick="dismissDropBanner()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:#94A3B8;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:12px;transition:color 0.15s">
+            Kapat ✕
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFET SİMÜLASYON KONTROL BARI (Tıklamayla Açılır / Kapanır) -->
+    <div class="disaster-ctrl" id="disaster-ctrl-bar" style="display:none">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span class="disaster-tag" id="current-disaster-tag">Aktif Afet Kaydı</span>
+          <h2 style="font-size:15px;font-weight:700" id="current-disaster-title">M7.4 Deprem Bildirimi (Doğu Anadolu Fayı)</h2>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted)" id="current-disaster-desc">
+          Etkilenen İller: <strong>Hatay · Kahramanmaraş · Malatya · Adıyaman · Gaziantep</strong> · Kaynak: <strong>AFAD/Kandilli</strong>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-action-primary" style="background:#2563EB" id="btn-trigger-flood" onclick="triggerRizeFloodSimulation()">
+          <span>🌊</span> Rize Sel Felaketini Tetikle (+5 Müşteri)
+        </button>
+        <button class="btn-action-primary" id="btn-trigger" onclick="runDisasterSimulation()">
+          <span>⚡</span> M7.4 Deprem Simülasyonu
+        </button>
+      </div>
+
+      <!-- CANLI İLERLEME ÇUBUĞU (Simülasyonda Görünür) -->
+      <div class="pipeline-progress-box" id="pipeline-box">
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600">
+          <span id="pipeline-status-text">Olay tetiklendi...</span>
+          <span id="pipeline-percent-text">0%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim)" id="pipeline-sub-text">
+          Veritabanı taranıyor...
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SEKME 1: OPERASYON KONSOLU (BANKA ÇALIŞANI & DENETİM) ─── -->
+    <div id="view-dashboard" style="display:none">
+
+      <!-- METRİK SAYAÇLARI -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-title">Etkilenen Müşteri</div>
+          <div class="metric-num" id="stat-etkilenen">258</div>
+          <div class="metric-sub">400 sentetik kayıt içinden</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Yüksek Öncelik (65+ Yaş/Engelli)</div>
+          <div class="metric-num" style="color:#E06C6C" id="stat-oncelik">76</div>
+          <div class="metric-sub">Öncelikli iletişim ve +1 ay destek</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Hazırlanan Erteleme Taslağı</div>
+          <div class="metric-num" style="color:var(--status-amber)" id="stat-taslak">258</div>
+          <div class="metric-sub">Karar insanda · 0 otomatik onay</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Ötelenen Taksit Hacmi</div>
+          <div class="metric-num" style="color:var(--ing-primary)" id="stat-hacim">₺8.54M</div>
+          <div class="metric-sub">Faizsiz ve cezasız vade sonu</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Müşteri Onayı / Temsilci Devri</div>
+          <div class="metric-num" style="color:var(--status-green)" id="stat-onay">2 Onay / 1 Devir</div>
+          <div class="metric-sub">İnsan onayı ve destek araması</div>
+        </div>
+      </div>
+      <div class="layout-cols">
+        <!-- SOL: ÖRNEK MÜŞTERİ KUYRUĞU -->
+        <div>
+          <div class="card-panel">
+            <div class="card-panel-hdr">
+              <span>📋 Vaka Müşteri Kuyruğu (Case Odak Örnekleri)</span>
+              <span style="font-size:11.5px;color:var(--text-dim)">İncelemek için müşteriye tıklayın</span>
+            </div>
+            <div class="card-panel-body" id="customer-queue-container">
+              <!-- HATİCE HANIM -->
+              <div class="cust-card active-cust" id="card-hatice" onclick="pickCustomer('hatice')">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <span style="font-weight:700;font-size:14px">👵 Hatice Hanım (72 yaş)</span>
+                  <span class="badge-pill" style="background:var(--status-red-bg);color:#E06C6C">Yüksek Öncelik</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+                  <div>İl: <strong style="color:var(--text-main)">Hatay / Antakya</strong></div>
+                  <div>Kredi: <strong style="color:var(--text-main)">Konut (14.500 ₺)</strong></div>
+                  <div>DASK: <strong style="color:var(--status-green)">✓ Var</strong></div>
+                  <div>Erteleme: <strong style="color:var(--ing-primary)">4 Ay (3+1)</strong></div>
+                </div>
+                <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+                  "Sayın Hatice Hanım, geçmiş olsun. Konut krediniz için 4 aylık erteleme talebiniz değerlendirmeye alınmak üzere hazırlandı..."
+                </div>
+                <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+                  <span style="color:var(--status-green);font-weight:600" id="badge-hatice">✓ Müşteri Onayladı → Çalışan Havuzunda</span>
+                  <span style="color:var(--text-dim)">Ötelenen: 58.000 ₺</span>
+                </div>
+              </div>
+
+              <!-- EMRE BEY -->
+              <div class="cust-card" id="card-emre" onclick="pickCustomer('emre')">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <span style="font-weight:700;font-size:14px">👨 Emre Bey (34 yaş)</span>
+                  <span class="badge-pill" style="background:var(--status-blue-bg);color:var(--status-blue)">Normal Öncelik</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+                  <div>İl: <strong style="color:var(--text-main)">K.Maraş / Elbistan</strong></div>
+                  <div>Kredi: <strong style="color:var(--text-main)">İhtiyaç (5.200 ₺)</strong></div>
+                  <div>DASK: <strong style="color:var(--text-dim)">Uygulanmaz</strong></div>
+                  <div>Erteleme: <strong style="color:var(--ing-primary)">3 Ay</strong></div>
+                </div>
+                <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+                  "Sayın Emre Bey, geçmiş olsun. Afet bölgesi kapsamında ihtiyaç krediniz için 3 aylık erteleme taslağınız hazırlandı..."
+                </div>
+                <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+                  <span style="color:var(--status-green);font-weight:600" id="badge-emre">✓ Müşteri Onayladı → Çalışan Havuzunda</span>
+                  <span style="color:var(--text-dim)">Ötelenen: 15.600 ₺</span>
+                </div>
+              </div>
+
+              <!-- SELMA HANIM -->
+              <div class="cust-card" id="card-selma" onclick="pickCustomer('selma')">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <span style="font-weight:700;font-size:14px">👩 Selma Hanım (58 yaş)</span>
+                  <span class="badge-pill" style="background:var(--status-blue-bg);color:var(--status-blue)">Normal Öncelik</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+                  <div>İl: <strong style="color:var(--text-main)">Malatya / Battalgazi</strong></div>
+                  <div>Kredi: <strong style="color:var(--text-main)">Konut (11.000 ₺)</strong></div>
+                  <div>DASK: <strong style="color:#E06C6C">⚠ DASK Yok</strong></div>
+                  <div>Erteleme: <strong style="color:var(--ing-primary)">3 Ay</strong></div>
+                </div>
+                <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+                  "Sayın Selma Hanım, geçmiş olsun... Konutunuzun DASK kaydına ulaşılamadığından temsilcimiz sizi arayacaktır."
+                </div>
+                <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+                  <span style="color:#B3A4DB;font-weight:600" id="badge-selma">☎ Temsilciye Devredildi (DASK Danışmanlığı)</span>
+                  <span style="color:var(--text-dim)">Ötelenen: 33.000 ₺</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAĞ: EVENTBUS / KAFKA CANLI AKIŞ -->
+        <div>
+          <div class="card-panel">
+            <div class="card-panel-hdr">
+              <span>📡 EventBus / Canlı Kafka & SSE Akışı</span>
+              <span style="font-size:11px;color:var(--status-green)">● Dinleniyor</span>
+            </div>
+            <div class="card-panel-body">
+              <div class="event-feed" id="event-feed-box">
+                <!-- Javascript ile doldurulur -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ─── SEKME 2: LİMAN DİJİTAL BANKACILIK (NORMAL BANKACILIK ARAYÜZÜ) ─── -->
+    <div id="view-customer">
+      <div class="banking-container">
+        
+        <!-- MÜŞTERİ KARŞILAMA VE GÜVENLİK BİLGİSİ -->
+        <div class="banking-header-bar">
+          <div class="banking-user-info">
+            <h2>İyi Günler, Sayın <span id="bank-cust-name">Hatice Hanım</span> 👋</h2>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:12px">
+              <span>Müşteri No: <strong style="color:var(--text-main)">8492019</strong></span>
+              <span style="color:var(--text-dim)">•</span>
+              <span>İkâmet: <strong id="bank-cust-city" style="color:var(--text-main)">Hatay / Antakya</strong></span>
+              <span style="color:var(--text-dim)">•</span>
+              <span style="color:var(--status-green)">● 2FA Mobil Doğrulandı</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span style="font-size:11.5px;color:var(--text-muted)">Aktif Müşteri:</span>
+            <select id="quick-cust-switch" onchange="pickCustomer(this.value)" style="background:var(--bg-card);border:1px solid var(--border-subtle);color:white;padding:6px 12px;border-radius:6px;font-size:12px">
+              <option value="hatice">👵 Hatice Hanım (Hatay - Konut)</option>
+              <option value="emre">👨 Emre Bey (K.Maraş - İhtiyaç)</option>
+              <option value="selma">👩 Selma Hanım (Malatya - DASK Yok)</option>
+              <option value="dursun">🌊 Dursun Ali Reis (Rize - Çay/Konut)</option>
+              <option value="fadime">🌊 Fadime Kaya (Rize - Konut)</option>
+              <option value="temel">🌊 Temel Karadeniz (Rize - İhtiyaç)</option>
+              <option value="asiye">🌊 Asiye Yıldız (Rize - Esnaf)</option>
+              <option value="idris">🌊 İdris Çepni (Rize - Temsilci Devri)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DOĞAL BANKACILIK AKIŞI: AFET DESTEK BİLDİRİM BANTI -->
+        <div class="banking-ribbon" id="bank-afet-ribbon">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:42px;height:42px;border-radius:10px;background:rgba(217,83,0,0.18);border:1px solid var(--ing-border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0" id="ribbon-icon">
+              🚨
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--ing-primary);text-transform:uppercase;letter-spacing:0.04em" id="ribbon-tag">
+                Liman Afet Destek Paketi · Otomatik Durum Tespiti
+              </div>
+              <div style="font-size:13.5px;color:var(--text-main);margin-top:2px" id="ribbon-msg">
+                Bölgenizde yaşanan afet sebebiyle <strong id="ribbon-loan-type">Konut Krediniz</strong> için <strong><span id="ribbon-months">4 Aylık</span> faizsiz erteleme taslağınız</strong> hazırlandı.
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center" id="ribbon-actions-box">
+            <button class="btn-decision-approve" style="padding:8px 14px;font-size:12px" onclick="approvePlan()">
+              ✓ Onayla
+            </button>
+            <button class="btn-decision-escalate" style="padding:8px 12px;font-size:12px" onclick="openEscalate()">
+              ☎ Temsilci Arasın
+            </button>
+            <button class="btn-decision-chat" style="padding:8px 12px;font-size:12px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+            <button class="btn-step-nav" style="padding:8px 10px;font-size:11.5px" onclick="openAfetFlowModal(1)" title="Detaylı Akış Sihirbazı">
+              Plan Detayları →
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 SÜTUNLU BANKACILIK KARTLARI (HESAP, KART, KREDİ) -->
+        <div class="banking-grid">
+          
+          <!-- KART 1: VADESİZ TL HESABIM -->
+          <div class="banking-card">
+            <div>
+              <div class="banking-card-hdr">
+                <span class="banking-card-title">
+                  <span style="color:var(--ing-primary)">🏦</span> Vadesiz TL Hesabım
+                </span>
+                <span class="badge-pill" style="background:rgba(255,255,255,0.06);color:var(--text-dim)">Ana Hesap</span>
+              </div>
+              <div class="banking-balance">₺48.250,00</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace">
+                <span>TR33 0009 9000 0012 3456 7890 01</span>
+                <button onclick="navigator.clipboard && navigator.clipboard.writeText('TR330009900000123456789001'); alert('IBAN Kopyalandı!')" style="background:transparent;border:none;color:var(--ing-primary);cursor:pointer;font-size:12px" title="IBAN Kopyala">📋</button>
+              </div>
+            </div>
+            <div class="banking-card-actions">
+              <button class="btn-bank-action primary" onclick="alert('FAST Transfer menüsü')">💸 Para Gönder (FAST)</button>
+              <button class="btn-bank-action" onclick="alert('QR İşlemleri menüsü')">📱 QR İşlemleri</button>
+              <button class="btn-bank-action" onclick="alert('Hesap Özeti indiriliyor')">📑 Hesap Özeti</button>
+            </div>
+          </div>
+
+          <!-- KART 2: LİMAN BONUS KREDİ KARTIM -->
+          <div class="banking-card">
+            <div>
+              <div class="banking-card-hdr">
+                <span class="banking-card-title">
+                  <span style="color:#C98A2C">💳</span> Liman Bonus Kredi Kartı
+                </span>
+                <span style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono'">•••• 4182</span>
+              </div>
+              <div class="banking-balance" style="font-size:22px">₺4.820,00 <span style="font-size:13px;font-weight:400;color:var(--text-muted)">Güncel Borç</span></div>
+              <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                  <span>Kullanılabilir Limit:</span>
+                  <strong style="color:var(--text-main)">₺55.180,00 / 60.000 ₺</strong>
+                </div>
+                <div style="width:100%;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+                  <div style="width:8%;height:100%;background:#C98A2C"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-dim)">
+                  <span>Hesap Kesim: 18 Ekim</span>
+                  <span>Son Ödeme: 28 Ekim</span>
+                </div>
+              </div>
+            </div>
+            <div class="banking-card-actions">
+              <button class="btn-bank-action" onclick="alert('Borç ödeme ekranı')">Borç Öde</button>
+              <button class="btn-bank-action" onclick="alert('Limit artırım talebi')">Limit İşlemleri</button>
+              <button class="btn-bank-action" onclick="alert('Dönem içi harcamalar')">Ekstre Görüntüle</button>
+            </div>
+          </div>
+
+          <!-- KART 3: AKTİF KREDİ VE GÖMÜLÜ AFET AKIŞI KARTI (KİLİT NOKTA) -->
+          <div class="banking-card" style="border:1px solid var(--ing-border)">
+            <div>
+              <div class="banking-card-hdr">
+                <span class="banking-card-title">
+                  <span style="color:var(--ing-primary)">🏠</span> <span id="bank-loan-type-title">Konut Kredisi</span>
+                </span>
+                <span class="badge-pill" style="background:rgba(217,83,0,0.15);color:var(--ing-primary)">Aktif Kredi</span>
+              </div>
+              
+              <div style="display:flex;justify-content:space-between;align-items:flex-end">
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted)">Aylık Taksit</div>
+                  <div class="banking-balance" style="font-size:22px" id="bank-loan-installment-disp">14.500 ₺</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:11px;color:var(--text-muted)">Kalan Borç Tutarı</div>
+                  <div style="font-size:15px;font-weight:700;color:var(--text-main)" id="bank-loan-debt-disp">1.250.000 ₺</div>
+                </div>
+              </div>
+
+              <!-- GÖMÜLÜ AFET AKIŞI ALANI (FLOW ANCHOR) -->
+              <div class="loan-afet-box" id="bank-loan-afet-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+                  <span id="bank-loan-badge" class="badge-pill" style="background:var(--status-amber-bg);color:var(--status-amber);font-weight:700">
+                    ⏳ Afet Erteleme Taslağınız Hazırlandı
+                  </span>
+                  <span id="bank-loan-dask" style="font-size:11px;color:var(--status-green);font-weight:600">✓ DASK Var</span>
+                </div>
+                <div id="bank-loan-desc" style="font-size:12px;color:#CBD5E1;line-height:1.4">
+                  Bölgenizdeki afet tespitiyle <strong id="bank-loan-months-desc">4 aylık faizsiz vade sonu erteleme</strong> seçeneğiniz tanımlanmıştır.
+                </div>
+                
+                <!-- 3 SEÇENEK: [Onayla] · [Temsilci] · [Sorum Var] -->
+                <div class="decision-row-3" style="margin-top:10px" id="bank-loan-decision-btns">
+                  <button class="btn-decision-approve" style="padding:8px 8px;font-size:12px" onclick="approvePlan()">
+                    ✓ Onayla
+                  </button>
+                  <button class="btn-decision-escalate" style="padding:8px 8px;font-size:11.5px" onclick="openEscalate()">
+                    ☎ Temsilci
+                  </button>
+                  <button class="btn-decision-chat" style="padding:8px 8px;font-size:11.5px" onclick="openChatAgent()">
+                    💬 Sorum Var
+                  </button>
+                </div>
+                <button id="btn-start-flow" onclick="openAfetFlowModal(1)" class="btn-step-nav" style="padding:7px 12px;font-size:11.5px;width:100%;justify-content:center;margin-top:8px;display:flex">
+                  📋 Tüm Plan Detaylarını İncele (3 Adım) →
+                </button>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-dim);margin-top:14px;border-top:1px solid var(--border-subtle);padding-top:8px">
+              <span>Sonraki Taksit: 24 Ekim 2026</span>
+              <span id="bank-loan-total-deferred">Ötelenen: 58.000 ₺</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SON HESAP HAREKETLERİ VE HIZLI DİJİTAL MENÜ -->
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-top:4px">
+          
+          <!-- HESAP HAREKETLERİ -->
+          <div class="banking-card">
+            <div class="banking-card-hdr">
+              <span class="banking-card-title">
+                <span>📑</span> Son Hesap Hareketleri
+              </span>
+              <span style="font-size:11.5px;color:var(--ing-primary);cursor:pointer" onclick="alert('Tüm hesap hareketleri listeleniyor.')">Tümünü Gör →</span>
+            </div>
+            <div>
+              <div class="tx-item">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:6px;background:rgba(46,158,104,0.15);color:var(--status-green);display:flex;align-items:center;justify-content:center;font-weight:700">↓</div>
+                  <div>
+                    <div style="font-weight:600;color:#FFFFFF">SGK Emekli Maaşı / Gelir Transferi</div>
+                    <div style="font-size:10.5px;color:var(--text-dim)">14 Ekim 2026 · Havale / EFT</div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-weight:700;color:var(--status-green)">+₺17.500,00</div>
+                  <div style="font-size:10.5px;color:var(--text-dim)">Bakiye: ₺48.250,00</div>
+                </div>
+              </div>
+
+              <div class="tx-item">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,0.06);color:var(--text-muted);display:flex;align-items:center;justify-content:center">↑</div>
+                  <div>
+                    <div style="font-weight:600;color:#FFFFFF">BİM Birleşik Mağazalar</div>
+                    <div style="font-size:10.5px;color:var(--text-dim)">12 Ekim 2026 · Banka Kartı Harcaması</div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-weight:700;color:var(--text-main)">-₺340,50</div>
+                  <div style="font-size:10.5px;color:var(--text-dim)">Bakiye: ₺30.750,00</div>
+                </div>
+              </div>
+
+              <div class="tx-item">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,0.06);color:var(--text-muted);display:flex;align-items:center;justify-content:center">↑</div>
+                  <div>
+                    <div style="font-weight:600;color:#FFFFFF">Toroslar EDAŞ Elektrik Faturası</div>
+                    <div style="font-size:10.5px;color:var(--text-dim)">08 Ekim 2026 · Otomatik Ödeme Talimatı</div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-weight:700;color:var(--text-main)">-₺420,00</div>
+                  <div style="font-size:10.5px;color:var(--text-dim)">Bakiye: ₺31.090,50</div>
+                </div>
+              </div>
+
+              <div class="tx-item">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,0.06);color:var(--text-muted);display:flex;align-items:center;justify-content:center">↑</div>
+                  <div>
+                    <div style="font-weight:600;color:#FFFFFF">Merkez Eczanesi İlaç Harcaması</div>
+                    <div style="font-size:10.5px;color:var(--text-dim)">02 Ekim 2026 · Temassız İşlem</div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-weight:700;color:var(--text-main)">-₺185,00</div>
+                  <div style="font-size:10.5px;color:var(--text-dim)">Bakiye: ₺31.510,50</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HIZLI DİJİTAL İŞLEMLER VE AFET DESTEK BİLGİ KARTI -->
+          <div class="banking-card">
+            <div class="banking-card-hdr">
+              <span class="banking-card-title">
+                <span>⚡</span> Hızlı İşlemler
+              </span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn-bank-action" style="justify-content:flex-start;padding:11px 14px" onclick="alert('FAST Para Transferi menüsü.')">
+                <span>💸</span> Başka Hesaba FAST Gönder
+              </button>
+              <button class="btn-bank-action" style="justify-content:flex-start;padding:11px 14px" onclick="alert('Fatura ve kurum ödemeleri.')">
+                <span>📄</span> Fatura / Kurum Borcu Öde
+              </button>
+              <button class="btn-bank-action" style="justify-content:flex-start;padding:11px 14px" onclick="alert('Döviz ve altın kurları.')">
+                <span>💱</span> Döviz & Altın İşlemleri
+              </button>
+              <button class="btn-bank-action primary" style="justify-content:flex-start;padding:11px 14px;background:rgba(217,83,0,0.18);border-color:var(--ing-border);color:#FFFFFF" onclick="openAfetFlowModal()">
+                <span>🛡️</span> Afet Erteleme Akışını Başlat
+              </button>
+            </div>
+
+            <div style="margin-top:16px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:6px;padding:12px;font-size:11.5px;color:var(--text-muted)">
+              <strong>7/24 Afet Destek Hattı:</strong> 0850 222 0 600 numaralı hattan Afet Masası müşteri temsilcisine öncelikli bağlanabilirsiniz.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- 4. AFET MODU AKIŞI (BANKACILIK İÇİNE GÖMÜLÜ STEPPER WIZARD)      -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <div id="afet-flow-modal" class="afet-flow-overlay">
+      <div class="afet-flow-window">
+        <!-- MODAL BAŞLIK -->
+        <div class="afet-flow-hdr">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">🛡️</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#FFFFFF">Liman Afet Destek Akışı</div>
+              <div style="font-size:11px;color:var(--text-muted)">Otonom Kredi Erteleme & Kolaylaştırıcı Süreç</div>
+            </div>
+          </div>
+          <button onclick="closeAfetFlowModal()" style="background:transparent;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:4px 8px">✕</button>
+        </div>
+
+        <!-- STEPPER (AKIŞ ADIMLARI) -->
+        <div class="flow-stepper">
+          <div class="flow-step-pill active" id="flow-step-1" onclick="goToFlowStep(1)">
+            <span>1</span> Bölge Tespiti
+          </div>
+          <div class="flow-step-pill" id="flow-step-2" onclick="goToFlowStep(2)">
+            <span>2</span> Erteleme Planı
+          </div>
+          <div class="flow-step-pill" id="flow-step-3" onclick="goToFlowStep(3)">
+            <span>3</span> Müşteri Kararı & Onay
+          </div>
+        </div>
+
+        <!-- AKIŞ İÇERİĞİ -->
+        <div style="padding:22px;max-height:500px;overflow-y:auto">
+          
+          <!-- ADIM 1: BÖLGE VE AFET TESPİTİ -->
+          <div id="flow-step-content-1" class="flow-step-content">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:11px;font-weight:700;color:var(--ing-primary);text-transform:uppercase;letter-spacing:0.04em">
+                Adım 1 / 3 · Otonom Durum Tespiti
+              </span>
+              <span class="badge-pill" style="background:rgba(46,158,104,0.15);color:var(--status-green);font-weight:700">
+                ✓ Doğrulandı (AFAD / Kandilli)
+              </span>
+            </div>
+
+            <h3 style="font-size:17px;font-weight:700;margin-bottom:6px">
+              Afet Koordinat Eşleştirmesi: <span id="flow-step1-city">Hatay / Antakya</span>
+            </h3>
+            <p style="font-size:12.5px;color:var(--text-muted);line-height:1.5">
+              T.C. İçişleri Bakanlığı AFAD ve Kandilli Rasathanesi verileri ile bankamızdaki ikâmetgâh koordinatlarınız otomatik olarak eşleştirilmiştir.
+            </p>
+
+            <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:14px;margin:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
+              <div>
+                <span style="color:var(--text-muted)">Tespit Edilen Olay:</span>
+                <div style="font-weight:700;color:#FFFFFF;margin-top:2px" id="flow-step1-event">M7.4 Deprem Bildirimi (Doğu Anadolu Fayı)</div>
+              </div>
+              <div>
+                <span style="color:var(--text-muted)">Resmi Bildirim Referansı:</span>
+                <div style="font-family:'JetBrains Mono';font-weight:700;color:var(--ing-primary);margin-top:2px" id="flow-step1-ref">AFAD-2026-TR-8812</div>
+              </div>
+              <div>
+                <span style="color:var(--text-muted)">Müşteri İkâmet Adresi:</span>
+                <div style="font-weight:700;color:#FFFFFF;margin-top:2px" id="flow-step1-address">Hatice Hanım (Antakya Mah.)</div>
+              </div>
+              <div>
+                <span style="color:var(--text-muted)">Eşleşme Durumu:</span>
+                <div style="font-weight:700;color:var(--status-green);margin-top:2px">● 1. Derece Afet Çeperinde</div>
+              </div>
+            </div>
+
+            <div style="background:rgba(217,83,0,0.06);border:1px solid var(--ing-border);border-radius:6px;padding:12px;font-size:12px;color:#CBD5E1;line-height:1.5">
+              <strong>Kolaylaştırıcı Güvence:</strong> Şubeye gitmenize, sıra beklemenize veya evrak kuyruğuna girmenize gerek yoktur. Liman Afet Destek Modu kapsamında haklarınız otomatik hesaplanmıştır.
+            </div>
+
+            <div style="margin-top:18px">
+              <button class="btn-action-primary" style="width:100%;justify-content:center;padding:12px;font-size:13.5px" onclick="goToFlowStep(2)">
+                Erteleme Planını İncele (Adım 2) →
+              </button>
+            </div>
+          </div>
+
+          <!-- ADIM 2: ERTELEME PLANI VE KURAL MOTORU -->
+          <div id="flow-step-content-2" class="flow-step-content" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:11px;font-weight:700;color:var(--ing-primary);text-transform:uppercase;letter-spacing:0.04em">
+                Adım 2 / 3 · Erteleme Şartları & Güvence
+              </span>
+              <span class="badge-pill" style="background:rgba(217,83,0,0.15);color:var(--ing-primary);font-weight:700">
+                🛡️ Faizsiz & Cezasız Vade Sonu
+              </span>
+            </div>
+
+            <!-- PLAN DETAYLARI KARTLARI -->
+            <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:16px;margin-bottom:14px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted)">Önerilen Süre</div>
+                  <div style="font-size:22px;font-weight:700;color:var(--ing-primary)" id="p-sure">4 Ay</div>
+                  <div style="font-size:10px;color:var(--text-dim)">Vade sonuna aktarım</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted)">Aylık Taksit</div>
+                  <div style="font-size:22px;font-weight:700" id="p-taksit">14.500 ₺</div>
+                  <div style="font-size:10px;color:var(--text-dim)" id="p-kredi-tur">Konut Kredisi</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted)">Toplam Ötelenen</div>
+                  <div style="font-size:22px;font-weight:700;color:var(--status-green)" id="p-toplam">58.000 ₺</div>
+                  <div style="font-size:10px;color:var(--text-dim)">Ek faiz / masraf yok</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BELGELER VE DASK TEYİDİ -->
+            <div style="margin:14px 0">
+              <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase">
+                Gerekli Belgeler & Sigorta Teyidi (60 Gün Ek Süre)
+              </div>
+              <ul id="p-belgeler" style="font-size:12px;line-height:1.8;padding-left:18px;color:#CBD5E1">
+                <!-- JS ile dinamik dolar -->
+              </ul>
+            </div>
+
+            <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border-subtle);border-radius:6px;padding:10px 14px;font-size:11.5px;color:var(--text-muted)">
+              ✓ <strong>Kural Motoru Denetimi:</strong> Banka kod üst sınırı gereğince erteleme hiçbir koşulda 6 ayı aşamaz.
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:18px">
+              <button class="btn-step-nav" onclick="goToFlowStep(1)">← Geri (Bölge)</button>
+              <button class="btn-action-primary" style="flex:1;justify-content:center;padding:12px" onclick="goToFlowStep(3)">
+                Kişiselleştirilmiş İletişim & Karar (Adım 3) →
+              </button>
+            </div>
+          </div>
+
+          <!-- ADIM 3: MÜŞTERİ KARARI & ONLİNE ONAY -->
+          <div id="flow-step-content-3" class="flow-step-content" style="display:none">
+            <!-- BİLGİLENDİRME (AJAN B METNİ) -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:11px;font-weight:700;color:var(--ing-primary);text-transform:uppercase;letter-spacing:0.04em">
+                Adım 3 / 3 · Karar İnsanda (Müşteri Onayı)
+              </span>
+              <span id="cust-priority-tag" class="badge-pill" style="background:var(--status-red-bg);color:#E06C6C">
+                ⭐ Yüksek Öncelikli Kapsam
+              </span>
+            </div>
+
+            <h3 style="font-size:17px;font-weight:700;margin-bottom:6px">
+              Geçmiş Olsun, Sayın <span id="p-name">Hatice Hanım</span>
+            </h3>
+            <p style="font-size:12.5px;color:var(--text-muted);line-height:1.5">
+              Ajan B tarafından sizin için oluşturulan şeffaf ve saygılı bilgilendirme metni aşağıdadır. Karar tamamen sizdedir:
+            </p>
+
+            <div class="msg-quote" id="p-msg">
+              "Sayın Hatice Hanım, geçmiş olsun. Konut krediniz için 4 aylık erteleme talebiniz, değerlendirmeye alınmak üzere hazırlandı..."
+            </div>
+
+            <!-- 3 SEÇENEK: [Onayla] · [Temsilci arasın] · [Sorum var] -->
+            <div class="decision-row-3" style="margin-top:20px">
+              <button class="btn-decision-approve" onclick="approvePlan()">
+                ✓ Onayla
+              </button>
+              <button class="btn-decision-escalate" onclick="openEscalate()">
+                ☎ Temsilci Arasın
+              </button>
+              <button class="btn-decision-chat" onclick="openChatAgent()">
+                💬 Sorum Var
+              </button>
+            </div>
+            <button class="btn-decision-optout" onclick="optOutPlan()" style="margin-top:10px;width:100%">
+              ✕ Şimdilik Vazgeç (Normal Ödeme Planına Devam Et)
+            </button>
+
+            <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+              <button class="btn-step-nav" onclick="goToFlowStep(2)" style="font-size:11.5px;padding:6px 12px">
+                ← Geri: Plan Detayları
+              </button>
+              <span style="font-size:11px;color:var(--text-dim)">
+                * Karar insandadır · Onayınız ardından yetkili çalışan havuzuna iletilir.
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ─── SEKME 3: GÜÇLENDİRİLMİŞ AJAN STÜDYOSU & TOOL ÇAĞRI İZLERİ ─── -->
+    <div id="view-agent" style="display:none">
+      <div class="card-panel">
+        <div class="card-panel-hdr">
+          <span>🤖 Ajan Döngüsü ve Araç Çalıştırma İzleri (Agent Execution Studio)</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11.5px;color:var(--text-muted)">Müşteri:</span>
+            <select id="agent-cust-select" onchange="loadAgentStepsFor(this.value)" style="background:var(--bg-card);border:1px solid var(--border-subtle);color:white;padding:5px 10px;border-radius:4px;font-size:12px">
+              <option value="hatice">👵 Hatice Hanım (72 yaş · Konut · DASK Var)</option>
+              <option value="emre">👨 Emre Bey (34 yaş · İhtiyaç)</option>
+              <option value="selma">👩 Selma Hanım (58 yaş · Konut · DASK Yok)</option>
+              <option value="dursun">🌊 Dursun Ali Reis (69 yaş · Rize Sel/Çay · 4 Ay)</option>
+              <option value="fadime">🌊 Fadime Kaya (71 yaş · Rize Sel · 4 Ay)</option>
+              <option value="temel">🌊 Temel Karadeniz (42 yaş · Rize Sel · 3 Ay)</option>
+              <option value="asiye">🌊 Asiye Yıldız (38 yaş · Rize Sel · 3 Ay)</option>
+              <option value="idris">🌊 İdris Çepni (66 yaş · Rize Sel · Temsilci Devri)</option>
+            </select>
+            <button class="btn-action-primary" style="padding:6px 12px;font-size:12px" onclick="reRunAgentLoop()">
+              ▶ Ajanı Canlı Yeniden Koş
+            </button>
+            <button class="btn-action-primary" style="background:#181C26;border:1px solid var(--border-hover);color:var(--text-main);padding:6px 10px;font-size:12px" onclick="copyAllTraces(selectedCustKey)">
+              📋 JSON Kopyala
+            </button>
+            <button class="btn-action-primary" style="background:#181C26;border:1px solid var(--border-hover);color:var(--text-main);padding:6px 10px;font-size:12px" onclick="toggleToolSchemas()">
+              📖 Tool Şemaları
+            </button>
+          </div>
+        </div>
+
+        <div class="card-panel-body">
+          
+          <!-- 4'LÜ AJAN ÇALIŞMA METRİK PANELİ -->
+          <div class="agent-metrics-row">
+            <div class="agent-metric-box">
+              <div class="agent-metric-title">Toplam İcra Süresi</div>
+              <div class="agent-metric-val" id="stat-agent-latency" style="color:var(--status-green)">1.24 sn</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">5 Tool çağrısı toplamı</div>
+            </div>
+            <div class="agent-metric-box">
+              <div class="agent-metric-title">Tool Başarı Oranı</div>
+              <div class="agent-metric-val" id="stat-agent-success" style="color:#7EA5D9">5 / 5 OK</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Sıfır çalışma hatası</div>
+            </div>
+            <div class="agent-metric-box">
+              <div class="agent-metric-title">Kod Guardrail Güvencesi</div>
+              <div class="agent-metric-val" style="color:var(--ing-primary)">Max 6 Ay</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Deterministik üst sınır</div>
+            </div>
+            <div class="agent-metric-box">
+              <div class="agent-metric-title">Halüsinasyon Riski</div>
+              <div class="agent-metric-val" style="color:#3DAF7E">%0 (Korumalı)</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Sayısal değerler kodda</div>
+            </div>
+          </div>
+
+          <!-- TOOL FİLTRELEME ÇUBUĞU -->
+          <div class="agent-filter-bar">
+            <button class="agent-filter-btn active" id="filter-btn-all" onclick="filterAgentSteps('all')">
+              Tüm Çağrılar (5)
+            </button>
+            <button class="agent-filter-btn" id="filter-btn-plan" onclick="filterAgentSteps('Ajan A (Planlayıcı)')">
+              Ajan A (Planlayıcı) · 4 Tool
+            </button>
+            <button class="agent-filter-btn" id="filter-btn-comm" onclick="filterAgentSteps('Ajan B (İletişimci)')">
+              Ajan B (İletişimci) · 1 Tool
+            </button>
+            <button class="agent-filter-btn" id="filter-btn-rule" onclick="filterAgentSteps('rule')">
+              Kural Motoru & Guardrail
+            </button>
+          </div>
+
+          <!-- MİMARİ NOTU -->
+          <div style="background:rgba(217,83,0,0.04);border:1px solid var(--ing-border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <strong>Ajan Mimarisi Prensipleri:</strong> Harici karmaşık framework'ler yerine şeffaf ve deterministik özel bir <code>tool-calling</code> döngüsü kullanılır. Erteleme süreleri ve üst sınırlar LLM'in insafına bırakılmaz; <strong>kodda zorlanır</strong>. LLM sadece dil üretimi ve bağlamsal empati için kullanılır.
+            </div>
+          </div>
+
+          <!-- TOOL ŞEMALARI GİZLİ ÇEKMECESİ -->
+          <div id="tool-schemas-box" style="display:none;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <strong style="color:var(--ing-primary);font-size:13px">📖 Kayıtlı OpenAPI Tool Tanımları & Parametre Şemaları</strong>
+              <button onclick="toggleToolSchemas()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer">Kapat ✕</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-family:'JetBrains Mono',monospace;font-size:11px">
+              <div style="background:#090B0F;padding:10px;border-radius:4px;border:1px solid var(--border-subtle)">
+                <span style="color:#7EA5D9">musteri_bilgisi_getir(customer_id: str) -> CustomerCore</span><br>
+                <span style="color:var(--text-dim)">Parametreler: TCKN veya customer_id. Dönen: Yaş, İl, Aktif Kredi, Taksit.</span>
+              </div>
+              <div style="background:#090B0F;padding:10px;border-radius:4px;border:1px solid var(--border-subtle)">
+                <span style="color:#7EA5D9">oncelik_belirle(yas: int, hassas_durum: bool) -> Priority</span><br>
+                <span style="color:var(--text-dim)">Parametreler: yas >= 65 veya hassas. Dönen: YUKSEK veya NORMAL.</span>
+              </div>
+              <div style="background:#090B0F;padding:10px;border-radius:4px;border:1px solid var(--border-subtle)">
+                <span style="color:#7EA5D9">erteleme_taslagi_olustur(kredi: str, oncelik: str) -> DraftPlan</span><br>
+                <span style="color:var(--text-dim)">Kural motoru işletimi: Temel süre + Hassasiyet desteği. Kod üst sınırı: 6 ay.</span>
+              </div>
+              <div style="background:#090B0F;padding:10px;border-radius:4px;border:1px solid var(--border-subtle)">
+                <span style="color:#7EA5D9">iletisimci_ajan_yaz(model: str, ton: str, baglam: dict) -> str</span><br>
+                <span style="color:var(--text-dim)">LLM ile şeffaf, saygılı empati mesajı üretimi. Ticari kelimeler filtrelenir.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AJAN ADIMLARI ZAMAN ÇİZELGESİ -->
+          <div class="agent-timeline" id="agent-steps-timeline">
+            <!-- JavaScript ile render edilir -->
+          </div>
+
+          <!-- İNTERAKTİF AJAN TEST KONSOLU (CANLI PLAYGROUND) -->
+          <div class="agent-playground" id="agent-playground-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div>
+                <h4 style="font-size:14px;font-weight:700;color:#FFFFFF;display:flex;align-items:center;gap:6px">
+                  <span>⚡</span> İnteraktif Ajan Test Konsolu (Canlı Parametrelerle Çalıştır)
+                </h4>
+                <div style="font-size:11.5px;color:var(--text-muted)">
+                  Farklı müşteri profilleri girip Ajan A ve B'nin deterministik kural motorunu canlı test edin.
+                </div>
+              </div>
+              <span class="badge-pill" style="background:rgba(217,83,0,0.15);color:var(--ing-primary)">Canlı Simülatör</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4, 1fr) auto;gap:12px;align-items:flex-end">
+              <div>
+                <label class="form-label">MÜŞTERİ ADI</label>
+                <input type="text" id="play-name" class="form-input" value="Kemal Bey" style="padding:7px 10px;font-size:12px" />
+              </div>
+              <div>
+                <label class="form-label">YAŞ</label>
+                <input type="number" id="play-age" class="form-input" value="68" min="18" max="95" style="padding:7px 10px;font-size:12px" />
+              </div>
+              <div>
+                <label class="form-label">KREDİ TÜRÜ</label>
+                <select id="play-loan" class="form-input" style="padding:7px 10px;font-size:12px">
+                  <option value="konut">Konut Kredisi</option>
+                  <option value="ihtiyac">İhtiyaç Kredisi</option>
+                  <option value="kart">Kredi Kartı</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">DASK / SİGORTA</label>
+                <select id="play-dask" class="form-input" style="padding:7px 10px;font-size:12px">
+                  <option value="true">✓ DASK Var</option>
+                  <option value="false">⚠ DASK Yok (Temsilci Danışmanlığı)</option>
+                </select>
+              </div>
+              <div>
+                <button class="btn-action-primary" style="padding:8px 16px;font-size:12px;white-space:nowrap;height:35px" onclick="runPlaygroundSimulation()">
+                  🚀 Ajanı Çalıştır
+                </button>
+              </div>
+            </div>
+
+            <!-- CANLI PLAYGROUND SONUÇLARI -->
+            <div id="playground-result-box" style="display:none;margin-top:14px;background:#090B0F;border:1px solid var(--border-subtle);border-radius:6px;padding:12px;font-size:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span id="play-result-status" style="font-weight:700;color:var(--status-green)">● Ajan Döngüsü Tamamlandı (4 Adım, 1180 ms)</span>
+                <span id="play-result-plan" style="font-weight:700;color:var(--ing-primary)">Önerilen: 4 Ay Faizsiz Erteleme</span>
+              </div>
+              <div id="play-result-msg" style="font-style:italic;color:#CBD5E1;line-height:1.5;background:rgba(255,255,255,0.04);padding:8px 12px;border-radius:4px">
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ─── SEKME 4: KURALLAR & DENETİM ─── -->
+    <div id="view-audit" style="display:none">
+      <div class="card-panel">
+        <div class="card-panel-hdr">
+          <span>🛡️ Bankacılık Kuralları & Denetim İzi (Audit Log)</span>
+          <span style="font-size:11px;color:var(--status-green)">Mevzuat & KVKK Güvencesi</span>
+        </div>
+        <div class="card-panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div>
+              <h4 style="font-size:13.5px;font-weight:700;color:var(--ing-primary);margin-bottom:12px">
+                Kodla Zorlanan Kural Matrisi (Süre Üst Sınırları)
+              </h4>
+              <table style="width:100%;border-collapse:collapse;font-size:12px;color:var(--text-muted)">
+                <tr style="border-bottom:1px solid var(--border-subtle);color:var(--text-main)">
+                  <th style="text-align:left;padding:8px 0">Kredi Türü</th>
+                  <th style="padding:8px 0">Temel Erteleme</th>
+                  <th style="padding:8px 0">Yaşlı/Engelli (+1)</th>
+                  <th style="padding:8px 0">Kod Üst Sınırı</th>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-subtle)"><td style="padding:8px 0;color:var(--text-main)">Konut Kredisi</td><td align="center">3 Ay</td><td align="center">+1 Ay</td><td align="center" style="color:var(--ing-primary);font-weight:700">6 Ay</td></tr>
+                <tr style="border-bottom:1px solid var(--border-subtle)"><td style="padding:8px 0;color:var(--text-main)">İhtiyaç Kredisi</td><td align="center">3 Ay</td><td align="center">+1 Ay</td><td align="center" style="color:var(--ing-primary);font-weight:700">6 Ay</td></tr>
+                <tr><td style="padding:8px 0;color:var(--text-main)">Kredi Kartı</td><td align="center">2 Ay</td><td align="center">+1 Ay</td><td align="center" style="color:var(--ing-primary);font-weight:700">6 Ay</td></tr>
+              </table>
+
+              <div style="margin-top:18px;font-size:12px;color:var(--text-muted);line-height:1.6">
+                ℹ️ Ajan A önerilen süreyi aşan bir erteleme teklif etmeye kalksa bile, araç fonksiyonu süre değerini otomatik olarak matristeki üst sınıra indirir.
+              </div>
+            </div>
+
+            <div>
+              <h4 style="font-size:13.5px;font-weight:700;color:var(--status-green);margin-bottom:12px">
+                Denetim İzi (Audit Log Kayıtları)
+              </h4>
+              <div id="audit-log-box" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.9;color:#CBD5E1">
+                <div>[04:17:02] <strong style="color:var(--ing-primary)">disaster.declared</strong> → M7.4 Deprem (5 İl)</div>
+                <div>[04:17:05] <strong style="color:var(--status-blue)">customer.affected</strong> → cust_hatice_001 eşleşti</div>
+                <div>[04:17:08] <strong style="color:var(--status-amber)">plan.drafted</strong> → 4 ay taslak hazırlandı</div>
+                <div>[04:17:15] <strong style="color:var(--status-green)">plan.approved</strong> → Hatice Hanım mobilden onayladı</div>
+                <div>[04:17:22] <strong style="color:#B3A4DB">plan.escalated</strong> → Selma Hanım (DASK danışmanlığı için temsilci)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 4. TEMSİLCİ DEVİR MODALI                                         -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div id="escalate-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-md);max-width:440px;width:100%;padding:24px">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:6px">☎ Temsilci Talebi ve Danışmanlık</h3>
+      <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px">
+        Hazırlanan taslak durumunuza uymuyorsa veya daha uzun erteleme talep ediyorsanız temsilcimiz sizi arasın.
+      </p>
+
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px">Talep Nedeni:</label>
+        <select id="escalate-reason" style="width:100%;padding:10px;background:var(--bg-card);border:1px solid var(--border-subtle);color:white;border-radius:6px;font-size:12.5px">
+          <option value="sure_uzatma">Daha uzun süre erteleme talep ediyorum</option>
+          <option value="sesli_gorusme">Temsilci ile sesli görüşmek istiyorum</option>
+          <option value="dask_danisma">DASK haklarım konusunda bilgi almak istiyorum</option>
+          <option value="red">Erteleme istemiyorum, normal ödeyeceğim</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="closeEscalate()" style="padding:9px 15px;background:transparent;border:1px solid var(--border-subtle);color:var(--text-muted);border-radius:6px;cursor:pointer;font-size:12px">
+          Vazgeç
+        </button>
+        <button onclick="submitEscalate()" style="padding:9px 16px;background:var(--status-blue);border:none;color:white;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">
+          Temsilciye Aktar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 5. AFET SOHBET KATMANI (AJAN C - KİŞİSELLEŞTİRİLMİŞ SOHBET AJANI)-->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div id="afet-chat-modal" class="chat-modal-overlay">
+    <div class="chat-modal-window">
+      <!-- CHAT HEADER -->
+      <div class="chat-hdr">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:36px;height:36px;border-radius:8px;background:rgba(217,83,0,0.18);border:1px solid var(--ing-border);display:flex;align-items:center;justify-content:center;font-size:18px">
+            🤖
+          </div>
+          <div>
+            <div style="font-size:13.5px;font-weight:700;color:#FFFFFF;display:flex;align-items:center;gap:6px">
+              Liman Destek Asistanı
+              <span class="badge-pill" style="background:rgba(77,123,176,0.18);color:#7EA5D9;font-size:10px">Ajan C · Sohbet Katmanı</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted)" id="chat-hdr-sub">
+              Bağlam Yüklendi: Hatice Hanım · Konut Kredisi · 4 Ay Faizsiz
+            </div>
+          </div>
+        </div>
+        <button onclick="closeChatAgent()" style="background:transparent;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;padding:4px 8px">✕</button>
+      </div>
+
+      <!-- BAĞLAM BİLGİ BANTI (MODEL MÜŞTERİYİ ZATEN BİLİR) -->
+      <div class="chat-context-banner">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="color:var(--status-green)">●</span>
+          <span id="chat-context-text">Kişisel Kredi & DASK Verileriniz Yüklendi · Kendinizi Tanıtmanıza Gerek Yoktur</span>
+        </div>
+        <span style="font-size:10.5px;color:var(--text-dim);font-family:'JetBrains Mono'">In-Context Reasoning</span>
+      </div>
+
+      <!-- MESAJ LİSTESİ -->
+      <div class="chat-body" id="chat-messages-container">
+        <!-- Dinamik mesajlar buraya render edilir -->
+      </div>
+
+      <!-- HIZLI SORU ÖNERİLERİ (CHIPS) -->
+      <div class="chat-chips-scroll">
+        <button class="chat-chip" onclick="askQuickQuestion('Faiz veya dosya masrafı işleyecek mi?')">
+          💡 Faiz veya ceza işleyecek mi?
+        </button>
+        <button class="chat-chip" onclick="askQuickQuestion('DASK ve sigorta durumum nedir?')">
+          💡 DASK poliçem var mı, yeterli mi?
+        </button>
+        <button class="chat-chip" onclick="askQuickQuestion('Evrakları ne zamana kadar teslim etmeliyim?')">
+          💡 Evrakları ne zaman vermeliyim?
+        </button>
+        <button class="chat-chip" onclick="askQuickQuestion('Erteleme süresini 6 aya uzatabilir miyim?')">
+          💡 Süreyi uzatabilir miyim?
+        </button>
+        <button class="chat-chip" onclick="askQuickQuestion('Erteleme istemiyorum, normal ödemek istersem ne yapmalıyım?')">
+          💡 Erteleme istemezsem ne olur?
+        </button>
+      </div>
+
+      <!-- MESAJ YAZMA ALANI -->
+      <form class="chat-input-bar" onsubmit="handleChatSubmit(event)">
+        <input type="text" id="chat-user-input" class="form-input" style="flex:1;padding:10px 14px;font-size:12.5px" placeholder="Erteleme planınız veya haklarınızla ilgili bir soru sorun..." autocomplete="off" />
+        <button type="submit" class="btn-action-primary" style="padding:10px 16px;font-size:12.5px">
+          Gönder ➔
+        </button>
+      </form>
+
+      <!-- SOHBETTEN SONRA AYNI ÜÇ KARAR (STICKY DECISION FOOTER) -->
+      <div class="chat-bottom-decisions">
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600">
+          Karar İnsanda:
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-decision-approve" style="padding:7px 14px;font-size:12px" onclick="approvePlanFromChat()">
+            ✓ Planı Onayla
+          </button>
+          <button class="btn-decision-escalate" style="padding:7px 12px;font-size:12px" onclick="openEscalateFromChat()">
+            ☎ Temsilci Arasın
+          </button>
+          <button class="btn-decision-optout" style="padding:7px 12px;font-size:11.5px" onclick="optOutPlanFromChat()">
+            ✕ Vazgeç (Normal Öde)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    Sentetik veri ile hazırlanmış prototip &nbsp;·&nbsp; Liman Bankası Agentic AI 2026 &nbsp;·&nbsp; <strong>Afet Modu</strong>
+  </footer>
+
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- 5. UYGULAMA JAVASCRIPT MOTORU                                    -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <script>
+    // VERİ HAVUZU
+    const CUSTOMERS = {
+      hatice: {
+        id: 'cust_hatice_001',
+        name: 'Hatice Hanım',
+        age: 72,
+        city: 'Hatay / Antakya',
+        loanType: 'Konut Kredisi',
+        installment: '14.500 ₺',
+        total: '58.000 ₺',
+        months: '4 Ay',
+        dask: '✓ DASK Var (DASK-2022-HY-001)',
+        priority: 'Yüksek Öncelik',
+        msg: 'Sayın Hatice Hanım, geçmiş olsun. Yaşadığınız afet nedeniyle konut krediniz için 4 aylık kolaylaştırıcı erteleme talebiniz, değerlendirmeye alınmak üzere hazırlandı. Mevcut DASK poliçeniz (DASK-2022-HY-001) sistemimizde teyit edilmiştir. Siz uygun görürseniz onayınızla banka değerlendirmesine ilerleyebiliriz; dilerseniz temsilcimiz sizi arasın.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'Hasar tespit tutanağı veya ikametgâh belgesi <span style="color:var(--status-amber)">(60 gün ek süre)</span>',
+          'Tapu örneği <span style="color:var(--status-green)">(Kayıtlı ✓)</span>',
+          'DASK poliçe no: <strong>DASK-2022-HY-001</strong>'
+        ],
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_hatice_001"}', out: '{"ad": "Hatice", "yas": 72, "kredi": "konut", "aylik_taksit": 14500, "dask": true, "il": "Hatay"}', ms: 110, desc: 'Müşteri çekirdek verileri core-service üzerinden getirildi.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 72, "hassas_durum": true}', out: '{"oncelik": "YUKSEK", "kural": "yas >= 65"}', ms: 42, desc: '65 yaş üstü kuralı işletildi → Yüksek Öncelik verildi.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "oncelik": "yuksek"}', out: '{"erteleme_ay": 4, "kural": "konut_3 + hassasiyet_1", "kod_ust_sinir": 6}', ms: 80, desc: '3 ay temel + 1 ay hassasiyet desteği hesaplandı; 6 ay üst sınır kontrolü geçti.' },
+          { tool: 'belge_listesi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "dask": true}', out: '["kimlik", "hasar_tespit", "tapu", "dask_police_no"]', ms: 48, desc: 'DASK poliçesi mevcut olduğundan poliçe numarası şablona eklendi.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"model": "openai/gpt-4o-mini", "ton": "sakin, saygili"}', out: '"Sayın Hatice Hanım, geçmiş olsun. Konut krediniz için 4 aylık erteleme talebiniz değerlendirmeye alınmak üzere hazırlandı..."', ms: 1240, desc: 'Sakin ve saygılı dil filtresinden geçirildi. Ticari kelimeler ve kesin vaatler elendi.' },
+          { tool: 'sohbet_baglam_yukle', agent: 'Ajan C (Sohbet Ajanı)', in: '{"customer_id": "cust_hatice_001", "plan": "4_ay_konut", "dask": "DASK-2022-HY-001"}', out: '{"status": "CONTEXT_READY", "memory_injected": true}', ms: 35, desc: 'Hatice Hanım\'ın kredi, DASK ve 4 aylık plan bağlamı Ajan C sohbet oturumuna sıfır sorguyla yüklendi.' }
+        ]
+      },
+      emre: {
+        id: 'cust_emre_002',
+        name: 'Emre Bey',
+        age: 34,
+        city: 'K.Maraş / Elbistan',
+        loanType: 'İhtiyaç Kredisi',
+        installment: '5.200 ₺',
+        total: '15.600 ₺',
+        months: '3 Ay',
+        dask: 'Uygulanamaz (İhtiyaç)',
+        priority: 'Normal Öncelik',
+        msg: 'Sayın Emre Bey, geçmiş olsun. Afet bölgesi kapsamında ihtiyaç krediniz için 3 aylık erteleme taslağınız hazırlandı. Onayınız halinde banka yetkilisinin son kontrolüne iletilecektir.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'Hasar tespit tutanağı veya ikametgâh belgesi <span style="color:var(--status-amber)">(60 gün ek süre)</span>'
+        ],
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_emre_002"}', out: '{"ad": "Emre", "yas": 34, "kredi": "ihtiyac", "aylik_taksit": 5200, "dask": null}', ms: 95, desc: 'Müşteri çekirdek verileri core-service üzerinden çekildi.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 34, "hassas_durum": false}', out: '{"oncelik": "NORMAL"}', ms: 38, desc: 'Standart akış olarak işaretlendi.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "ihtiyac", "oncelik": "normal"}', out: '{"erteleme_ay": 3, "kural": "ihtiyac_temel_3", "kod_ust_sinir": 6}', ms: 75, desc: 'İhtiyaç kredisi 3 ay erteleme hesaplandı.' },
+          { tool: 'belge_listesi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "ihtiyac"}', out: '["kimlik", "hasar_tespit"]', ms: 40, desc: 'İhtiyaç kredisi için sade belge seti listelendi.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"model": "openai/gpt-4o-mini", "ton": "kisa_net"}', out: '"Sayın Emre Bey, geçmiş olsun. Afet bölgesi kapsamında ihtiyaç krediniz için 3 aylık erteleme taslağınız hazırlandı..."', ms: 1100, desc: 'Kısa ve net bilgilendirme mesajı oluşturuldu.' }
+        ]
+      },
+      selma: {
+        id: 'cust_selma_003',
+        name: 'Selma Hanım',
+        age: 58,
+        city: 'Malatya / Battalgazi',
+        loanType: 'Konut Kredisi',
+        installment: '11.000 ₺',
+        total: '33.000 ₺',
+        months: '3 Ay',
+        dask: '⚠ DASK Yok',
+        priority: 'Normal Öncelik',
+        msg: 'Sayın Selma Hanım, geçmiş olsun. Afet bölgesi kapsamında konut krediniz için 3 aylık erteleme taslağınız hazırlandı. Konutunuzun DASK kaydına ulaşılamamış olup, temsilcimiz haklarınız konusunda sizi bilgilendirecektir. Onayınız halinde banka yetkilisinin son kontrolüne iletilecektir.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'Hasar tespit tutanağı veya ikametgâh belgesi <span style="color:var(--status-amber)">(60 gün ek süre)</span>',
+          'Tapu örneği <span style="color:var(--status-green)">(Kayıtlı ✓)</span>',
+          'DASK poliçesi: <strong style="color:var(--status-red)">Kayıt bulunamadı (Temsilci arayacak)</strong>'
+        ],
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_selma_003"}', out: '{"ad": "Selma", "yas": 58, "kredi": "konut", "aylik_taksit": 11000, "dask": false}', ms: 105, desc: 'Konut kredisi verileri getirildi, DASK poliçesi sistemde tespit edilemedi.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 58}', out: '{"oncelik": "NORMAL"}', ms: 40, desc: 'Öncelik kuralı işletildi.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut"}', out: '{"erteleme_ay": 3, "kural": "konut_temel_3", "kod_ust_sinir": 6}', ms: 80, desc: '3 ay erteleme taslağı açıldı.' },
+          { tool: 'belge_listesi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "dask": false}', out: '["kimlik", "hasar_tespit", "tapu", "dask_temsilci_yonlendirme"]', ms: 52, desc: 'DASK eksikliği nedeniyle otomatik temsilci bilgilendirme notu eklendi.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "sakin, yonlendirici"}', out: '"Sayın Selma Hanım, geçmiş olsun... Konutunuzun DASK kaydına ulaşılamamış olup temsilcimiz arayacaktır."', ms: 1190, desc: 'DASK konusunda müşteri yönlendirmesi içeren metin hazırlandı.' }
+        ]
+      },
+      // 🌊 RİZE SEL & HEYELAN FELAKETİ MÜŞTERİLERİ (+5 KİŞİ)
+      dursun: {
+        id: 'cust_rize_001',
+        name: 'Dursun Ali Reis',
+        age: 69,
+        city: 'Rize / Çayeli (Aşıklar Deresi Taşkın Bölgesi)',
+        loanType: 'Tarım & Konut Kredisi',
+        installment: '16.200 ₺',
+        total: '64.800 ₺',
+        months: '4 Ay',
+        dask: '✓ DASK Var (DASK-2023-RZ-401)',
+        priority: 'Yüksek Öncelik (65+ Yaş & Afet Bölgesi)',
+        msg: 'Sayın Dursun Ali Bey, geçmiş olsun. Rize Çayeli ilçemizdeki sel felaketi sebebiyle çay tarımı ve konut krediniz için 4 aylık erteleme talebiniz değerlendirmeye alınmak üzere hazırlandı. DASK poliçeniz sistemimizde teyit edilmiştir. Siz uygun görürseniz onayınızla banka değerlendirmesine iletebiliriz; dilerseniz temsilcimiz sizi arasın.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'Çiftçi Kayıt Sistemi (ÇKS) / Tapu örneği <span style="color:var(--status-green)">(Kayıtlı ✓)</span>',
+          'İlçe Tarım & AFAD hasar tespit tutanağı <span style="color:var(--status-amber)">(60 gün ek süre)</span>',
+          'DASK poliçe no: <strong>DASK-2023-RZ-401</strong>'
+        ],
+        steps: [
+          { tool: 'sel_risk_haritasi_sorgula', agent: 'Ajan A (Planlayıcı)', in: '{"il": "Rize", "ilce": "Cayeli", "koordinat": "41.09, 40.72"}', out: '{"durum": "KIRMIZI_KOD_SEL", "risk": "KRITIK", "kaynak": "MGM/AFAD"}', ms: 92, desc: 'Meteoroloji kırmızı kod sel uyarısı ve Çayeli taşkın havzası eşleştirildi.' },
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_rize_001"}', out: '{"ad": "Dursun Ali", "yas": 69, "kredi": "tarim_konut", "aylik": 16200, "dask": true}', ms: 85, desc: '69 yaşındaki çay üreticisi müşterinin kredi ve aktif DASK kaydı çekildi.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 69, "afet": "sel_kirmizi_kod"}', out: '{"oncelik": "YUKSEK", "gerekce": "yas >= 65"}', ms: 35, desc: 'Hassas yaş grubu (69 yaş) nedeniyle Yüksek Öncelik atandı.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "oncelik": "yuksek"}', out: '{"erteleme_ay": 4, "kural": "konut_3 + yasli_1", "kod_ust_sinir": 6}', ms: 75, desc: '3 ay temel + 1 ay yaşlı desteği (toplam 4 ay) oluşturuldu; 6 ay üst sınır korundu.' },
+          { tool: 'belge_listesi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "dask": true, "afet": "sel"}', out: '["kimlik", "tapu_cks", "hasar_tespit", "dask_police_no"]', ms: 45, desc: 'Sel hasar tespiti ve ÇKS evrakları için 60 gün süre tanımlandı.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "saygili_empatik", "bolge": "Rize Çayeli"}', out: '"Sayın Dursun Ali Bey, geçmiş olsun. Rize Çayeli ilçemizdeki sel felaketi sebebiyle..."', ms: 1140, desc: 'Rize sel ve çay tarımı bağlamına uygun saygılı bildirim metni üretildi.' }
+        ]
+      },
+      fadime: {
+        id: 'cust_rize_002',
+        name: 'Fadime Kaya',
+        age: 71,
+        city: 'Rize / Ardeşen (Fırtına Vadisi Kıyı Hattı)',
+        loanType: 'Konut Kredisi',
+        installment: '12.400 ₺',
+        total: '49.600 ₺',
+        months: '4 Ay',
+        dask: '✓ DASK Var (DASK-2024-RZ-112)',
+        priority: 'Yüksek Öncelik (65+ Yaş)',
+        msg: 'Sayın Fadime Hanım, geçmiş olsun. Rize Ardeşen taşkın hattı kapsamında konut krediniz için 4 aylık erteleme planı oluşturuldu. Onayınız ile talep banka personelimizin inceleme havuzuna iletilecektir.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'Tapu örneği <span style="color:var(--status-green)">(Kayıtlı ✓)</span>',
+          'DASK poliçe no: <strong>DASK-2024-RZ-112</strong>'
+        ],
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_rize_002"}', out: '{"ad": "Fadime", "yas": 71, "kredi": "konut", "aylik": 12400, "dask": true}', ms: 78, desc: 'Müşteri konut kredisi ve aktif DASK kaydı doğrulandı.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 71}', out: '{"oncelik": "YUKSEK"}', ms: 30, desc: '71 yaş sebebiyle Yüksek Öncelik atandı.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "oncelik": "yuksek"}', out: '{"erteleme_ay": 4, "kod_ust_sinir": 6}', ms: 65, desc: '4 ay faizsiz öteleme taslağı bağlandı.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "sakin_guvenli"}', out: '"Sayın Fadime Hanım, geçmiş olsun..."', ms: 980, desc: 'Duyarlı ve sakin tonlu metin üretildi.' }
+        ]
+      },
+      temel: {
+        id: 'cust_rize_003',
+        name: 'Temel Karadeniz',
+        age: 42,
+        city: 'Rize / Merkez (Portakallık Mah.)',
+        loanType: 'İhtiyaç Kredisi',
+        installment: '5.800 ₺',
+        total: '17.400 ₺',
+        months: '3 Ay',
+        dask: 'Uygulanamaz (İhtiyaç Kredisi)',
+        priority: 'Normal Öncelik',
+        msg: 'Sayın Temel Bey, geçmiş olsun. Rize merkezdeki su baskınları kapsamında ihtiyaç krediniz için 3 aylık kolaylaştırıcı erteleme taslağınız hazırlanmıştır.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'İkametgâh belgesi <span style="color:var(--status-amber)">(60 gün ek süre)</span>'
+        ],
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_rize_003"}', out: '{"ad": "Temel", "yas": 42, "kredi": "ihtiyac", "aylik": 5800}', ms: 82, desc: 'Müşteri ihtiyaç kredisi verileri getirildi.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 42}', out: '{"oncelik": "NORMAL"}', ms: 28, desc: 'Standart akış olarak işaretlendi.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "ihtiyac"}', out: '{"erteleme_ay": 3, "kod_ust_sinir": 6}', ms: 60, desc: '3 ay erteleme hesaplandı.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "kisa_net"}', out: '"Sayın Temel Bey, geçmiş olsun..."', ms: 920, desc: 'Net ve şeffaf erteleme mesajı oluşturuldu.' }
+        ]
+      },
+      asiye: {
+        id: 'cust_rize_004',
+        name: 'Asiye Yıldız',
+        age: 38,
+        city: 'Rize / Fındıklı (Sümer Köyü)',
+        loanType: 'Esnaf Kredisi',
+        installment: '8.500 ₺',
+        total: '25.500 ₺',
+        months: '3 Ay',
+        dask: 'Uygulanamaz',
+        priority: 'Normal Öncelik',
+        msg: 'Sayın Asiye Hanım, geçmiş olsun. Rize Fındıklı ilçesindeki heyelan ve taşkın afeti dolayısıyla esnaf krediniz için 3 aylık erteleme taslağınız hazırlanmıştır.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'Esnaf Sicil & Vergi Levhası örneği <span style="color:var(--status-green)">(Kayıtlı ✓)</span>'
+        ],
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_rize_004"}', out: '{"ad": "Asiye", "yas": 38, "kredi": "esnaf", "aylik": 8500}', ms: 75, desc: 'Esnaf kredi kaydı doğrulandı.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 38}', out: '{"oncelik": "NORMAL"}', ms: 25, desc: 'Normal öncelik tespit edildi.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "ihtiyac"}', out: '{"erteleme_ay": 3, "kod_ust_sinir": 6}', ms: 55, desc: '3 ay erteleme bağlandı.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "destekleyici"}', out: '"Sayın Asiye Hanım, geçmiş olsun..."', ms: 890, desc: 'Esnaf odaklı destekleyici bildirim üretildi.' }
+        ]
+      },
+      idris: {
+        id: 'cust_rize_005',
+        name: 'İdris Çepni',
+        age: 66,
+        city: 'Rize / Güneysu (Merkez Mah.)',
+        loanType: 'Konut Kredisi',
+        installment: '10.500 ₺',
+        total: '42.000 ₺',
+        months: '4 Ay',
+        dask: '⚠ Sigorta Yok (Temsilci Danışmanlığı)',
+        priority: 'Yüksek Öncelik (65+ Yaş & Temsilci Devri)',
+        msg: 'Sayın İdris Bey, geçmiş olsun. Güneysu sel felaketi sebebiyle konut krediniz için 4 aylık erteleme taslağınız hazırlanmıştır. Konutunuzun sigortasına ulaşılamadığından temsilcimiz sizi arayarak haklarınız ve hasar tespit desteği konusunda yardımcı olacaktır.',
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Sistemde mevcut ✓)</span>',
+          'Tapu örneği <span style="color:var(--status-green)">(Kayıtlı ✓)</span>',
+          'DASK/Sel Poliçesi: <strong style="color:var(--status-red)">Poliçe tespit edilemedi (Temsilci arayacak)</strong>'
+        ],
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: '{"customer_id": "cust_rize_005"}', out: '{"ad": "İdris", "yas": 66, "kredi": "konut", "aylik": 10500, "dask": false}', ms: 84, desc: 'Müşteri konut kredisi çekildi, sel/DASK poliçesi bulunamadı.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: '{"yas": 66}', out: '{"oncelik": "YUKSEK"}', ms: 32, desc: '66 yaş nedeniyle Yüksek Öncelik atandı.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: '{"kredi": "konut", "oncelik": "yuksek"}', out: '{"erteleme_ay": 4, "kod_ust_sinir": 6}', ms: 70, desc: '4 ay erteleme taslağı bağlandı.' },
+          { tool: 'temsilci_devir_kontrol', agent: 'Ajan A (Planlayıcı)', in: '{"dask": false, "afet": "sel"}', out: '{"devir_gerekli": true, "sebep": "sigorta_eksik_danismanlik"}', ms: 45, desc: 'DASK ve sel teminatı olmaması sebebiyle otomatik temsilci devir bayrağı kalktı.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "guvence_veren", "temsilci_arama": true}', out: '"Sayın İdris Bey, geçmiş olsun... Konutunuzun sigorta kaydına ulaşılamadığından temsilcimiz arayacaktır."', ms: 1040, desc: 'Müşteriyi telaşlandırmayan, temsilci yönlendirmeli metin oluşturuldu.' }
+        ]
+      }
+    };
+
+    let selectedCustKey = 'hatice';
+    let currentRole = 'staff';
+
+    // CANLI EVENT LOGLARI
+    const eventLogs = [
+      { time: '04:17:01', topic: 'disaster.declared', desc: 'M7.4 Kahramanmaraş Depremi AFAD/Kandilli akışından alındı' },
+      { time: '04:17:02', topic: 'customer.affected', desc: '258 müşteri afet koordinatlarıyla eşleştirildi' },
+      { time: '04:17:03', topic: 'agent.loop.start', desc: 'Ajan A (Planlayıcı) cust_hatice_001 için uyandı (72 yaş)' },
+      { time: '04:17:04', topic: 'plan.drafted', desc: 'cust_hatice_001 için 4 ay (3+1 hassasiyet) taslak hazırlandı' },
+      { time: '04:17:05', topic: 'plan.drafted', desc: 'cust_emre_002 için 3 ay ihtiyaç ertelemesi hazırlandı' },
+      { time: '04:17:06', topic: 'plan.escalated', desc: 'cust_selma_003: DASK poliçesi eksikliği nedeniyle temsilciye devredildi' },
+      { time: '04:17:15', topic: 'plan.approved', desc: 'Hatice Hanım mobilden planı onayladı → Çalışan onayına gitti' }
+    ];
+
+    function renderEvents() {
+      const box = document.getElementById('event-feed-box');
+      box.innerHTML = eventLogs.map(e => `
+        <div class="event-entry">
+          <div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:10px">
+            <span>[${e.time}]</span>
+            <strong style="color:var(--ing-primary)">${e.topic}</strong>
+          </div>
+          <div style="color:var(--text-main);margin-top:3px">${e.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    // GİRİŞ / LİMANLI OL MOD GEÇİŞİ
+    function switchLoginMode(mode) {
+      document.getElementById('btn-login-tab').classList.toggle('active', mode === 'login');
+      document.getElementById('btn-register-tab').classList.toggle('active', mode === 'register');
+      document.getElementById('form-login-box').style.display = mode === 'login' ? 'block' : 'none';
+      document.getElementById('form-register-box').style.display = mode === 'register' ? 'block' : 'none';
+      document.getElementById('login-error-msg').style.display = 'none';
+
+      if (mode === 'register') {
+        setTimeout(() => {
+          const container = document.getElementById('reg-scroll-container');
+          if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
+      }
+    }
+
+    // YUKARI-AŞAĞI HAREKET ETTİRME / KAYDIRMA
+    function scrollRegister(dir) {
+      const container = document.getElementById('reg-scroll-container');
+      if (!container) return;
+      if (dir === 'top') {
+        container.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (dir === 'bottom') {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      } else if (dir === 'toggle') {
+        if (container.scrollTop > 80) {
+          container.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+      }
+    }
+
+    function handleScrollUpdate() {
+      const container = document.getElementById('reg-scroll-container');
+      const hint = document.getElementById('scroll-direction-hint');
+      if (!container || !hint) return;
+      if (container.scrollTop > 100) {
+        hint.innerHTML = 'Başa Dön ↑';
+      } else {
+        hint.innerHTML = 'Aşağı Kaydır ↓';
+      }
+    }
+
+    // ŞİFRE GÖSTER / GİZLE
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerText = '🙈';
+      } else {
+        input.type = 'password';
+        btn.innerText = '👁';
+      }
+    }
+
+    // HIZLI DEMO GİRİŞİ
+    function fillAndLogin(identifier, pass, role, custKey) {
+      document.getElementById('login-identifier').value = identifier;
+      document.getElementById('login-password').value = pass;
+      loginAs(role, custKey);
+    }
+
+    // FORM İLE ŞİFRELİ GİRİŞ YAP
+    function handleFormLogin(e) {
+      e.preventDefault();
+      const identifier = document.getElementById('login-identifier').value.trim().toLowerCase();
+      const pass = document.getElementById('login-password').value;
+      const errBox = document.getElementById('login-error-msg');
+
+      if (!identifier || !pass) {
+        errBox.innerText = 'Lütfen T.C. Kimlik / e-posta ve şifrenizi girin.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (identifier.includes('hatice')) {
+        loginAs('customer', 'hatice');
+      } else if (identifier.includes('emre')) {
+        loginAs('customer', 'emre');
+      } else if (identifier.includes('selma')) {
+        loginAs('customer', 'selma');
+      } else if (identifier.includes('calisan') || identifier.includes('staff')) {
+        loginAs('staff', null);
+      } else if (identifier.includes('admin')) {
+        loginAs('admin', null);
+      } else if (CUSTOMERS[identifier]) {
+        loginAs('customer', identifier);
+      } else {
+        let foundKey = Object.keys(CUSTOMERS).find(k => 
+          (CUSTOMERS[k].email && CUSTOMERS[k].email.toLowerCase() === identifier) || 
+          CUSTOMERS[k].id === identifier || 
+          CUSTOMERS[k].name.toLowerCase().includes(identifier)
+        );
+        if (foundKey) {
+          loginAs('customer', foundKey);
+        } else {
+          // Dinamik müşteri oluşturup gir
+          const dynKey = 'dyn_' + Date.now();
+          CUSTOMERS[dynKey] = {
+            id: 'cust_' + Math.floor(1000 + Math.random() * 9000),
+            name: identifier.split('@')[0].toUpperCase(),
+            age: 45,
+            city: 'Hatay / Antakya',
+            loanType: 'İhtiyaç Kredisi',
+            installment: '6.400 ₺',
+            total: '19.200 ₺',
+            months: '3 Ay',
+            dask: 'Uygulanamaz',
+            priority: 'Normal Öncelik',
+            msg: `Sayın ${identifier.split('@')[0]}, geçmiş olsun. Afet bölgesi kapsamında krediniz için 3 aylık erteleme taslağınız hazırlanmıştır.`,
+            docs: ['Kimlik fotokopisi / T.C. Kimlik doğrulaması ✓', 'Hasar tespit veya ikametgâh belgesi'],
+            steps: CUSTOMERS.emre.steps
+          };
+          loginAs('customer', dynKey);
+        }
+      }
+    }
+
+    // LİMANLI OL (KAYIT OL) FORMU
+    function handleFormRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value.trim();
+      const surname = document.getElementById('reg-surname').value.trim();
+      const tckn = document.getElementById('reg-tckn').value.trim();
+      const age = parseInt(document.getElementById('reg-age').value) || 35;
+      const city = document.getElementById('reg-city').value;
+      const email = document.getElementById('reg-email').value.trim();
+      const loanType = document.getElementById('reg-loan').value;
+      const daskVal = document.getElementById('reg-dask').value === 'true';
+      const isHassas = document.getElementById('reg-hassas').checked || age >= 65;
+
+      const custKey = 'user_' + Date.now();
+      const fullName = `${name} ${surname}`;
+
+      let ertelemeAy = (loanType === 'kart') ? 2 : 3;
+      if (isHassas) ertelemeAy += 1;
+      ertelemeAy = Math.min(ertelemeAy, 6);
+
+      const aylik = (loanType === 'konut') ? 13500 : (loanType === 'ihtiyac' ? 5800 : 3200);
+      const toplam = aylik * ertelemeAy;
+
+      CUSTOMERS[custKey] = {
+        id: 'cust_' + tckn.slice(0, 4) + '_' + Math.floor(100 + Math.random() * 900),
+        name: fullName,
+        email: email,
+        age: age,
+        city: `${city} (Afet Bölgesi)`,
+        loanType: (loanType === 'konut' ? 'Konut Kredisi' : (loanType === 'ihtiyac' ? 'İhtiyaç Kredisi' : 'Kredi Kartı')),
+        installment: aylik.toLocaleString('tr-TR') + ' ₺',
+        total: toplam.toLocaleString('tr-TR') + ' ₺',
+        months: `${ertelemeAy} Ay`,
+        dask: (loanType === 'konut' ? (daskVal ? '✓ DASK Var' : '⚠ DASK Yok (Temsilci Bilgilendirecek)') : 'Uygulanamaz'),
+        priority: isHassas ? 'Yüksek Öncelik' : 'Normal Öncelik',
+        msg: `Sayın ${fullName}, geçmiş olsun. Afet bölgesi kapsamında ${loanType} krediniz için ${ertelemeAy} aylık kolaylaştırıcı erteleme talebiniz hazırlanmıştır.`,
+        docs: [
+          'Kimlik fotokopisi / T.C. Kimlik doğrulaması <span style="color:var(--status-green)">(Onaylandı ✓)</span>',
+          'Hasar tespit tutanağı veya ikametgâh belgesi <span style="color:var(--status-amber)">(60 gün ek süre)</span>',
+          loanType === 'konut' ? 'Tapu örneği <span style="color:var(--status-green)">(İnceleniyor)</span>' : null,
+          loanType === 'konut' ? (daskVal ? 'DASK Poliçesi: Doğrulandı ✓' : '<strong style="color:var(--status-red)">DASK Poliçesi Eksik (Temsilci arayacak)</strong>') : null
+        ].filter(Boolean),
+        steps: [
+          { tool: 'musteri_bilgisi_getir', agent: 'Ajan A (Planlayıcı)', in: `{"customer_id": "${tckn}"}`, out: `{"ad": "${fullName}", "yas": ${age}, "il": "${city}", "kredi": "${loanType}"}`, ms: 105, desc: 'Yeni kayıtlı müşteri çekirdek verileri oluşturuldu.' },
+          { tool: 'oncelik_belirle', agent: 'Ajan A (Planlayıcı)', in: `{"yas": ${age}, "hassas_durum": ${isHassas}}`, out: `{"oncelik": "${isHassas ? 'YUKSEK' : 'NORMAL'}"}`, ms: 40, desc: isHassas ? '65 yaş üstü/hassas durum kuralı gereği Yüksek Öncelik verildi.' : 'Standart öncelik belirlendi.' },
+          { tool: 'erteleme_taslagi_olustur', agent: 'Ajan A (Planlayıcı)', in: `{"kredi": "${loanType}", "oncelik": "${isHassas ? 'yuksek' : 'normal'}"}`, out: `{"erteleme_ay": ${ertelemeAy}, "ust_sinir": 6}`, ms: 75, desc: 'Kural motoru çalıştırıldı, kod üst sınırı denetlendi.' },
+          { tool: 'belge_listesi_getir', agent: 'Ajan A (Planlayıcı)', in: `{"kredi": "${loanType}", "dask": ${daskVal}}`, out: '["kimlik", "hasar_tespit", "tapu"]', ms: 45, desc: 'Gerekli evrak listesi şablona bağlandı.' },
+          { tool: 'iletisimci_ajan_yaz', agent: 'Ajan B (İletişimci)', in: '{"ton": "sakin, saygili"}', out: `"Sayın ${fullName}, geçmiş olsun..."`, ms: 1150, desc: 'Saygılı, vaatsiz ve şeffaf bilgilendirme metni hazırlandı.' }
+        ]
+      };
+
+      const now = new Date().toTimeString().split(' ')[0];
+      eventLogs.unshift({
+        time: now,
+        topic: 'customer.registered',
+        desc: `YENİ MÜŞTERİ: ${fullName} (${city}) Limanlı oldu → Otonom erteleme planı oluşturuldu.`
+      });
+      renderEvents();
+
+      alert(`Tebrikler Sayın ${fullName}!\n\nLiman hesabınız başarıyla açıldı.\nBölgenizdeki afet durumu tespit edildi ve adınıza ${ertelemeAy} aylık erteleme taslağı hazırlandı.\n\nMüşteri portalınıza yönlendiriliyorsunuz.`);
+
+      loginAs('customer', custKey);
+    }
+
+    // GİRİŞ / ROL SEÇİMİ
+    function loginAs(role, custKey) {
+      currentRole = role;
+      document.getElementById('login-view').style.display = 'none';
+
+      if (role === 'customer') {
+        selectedCustKey = custKey || 'hatice';
+        document.getElementById('active-user-badge').innerText = `👤 ${CUSTOMERS[selectedCustKey].name}`;
+        updateCustomerView();
+        switchTab('customer');
+      } else if (role === 'admin') {
+        document.getElementById('active-user-badge').innerText = '⚙️ Sistem Admin';
+        switchTab('dashboard');
+      } else {
+        document.getElementById('active-user-badge').innerText = '🏦 Banka Çalışanı';
+        switchTab('dashboard');
+      }
+    }
+
+    function openLogin() {
+      document.getElementById('login-view').style.display = 'flex';
+    }
+
+    // SEKME DEĞİŞTİRME
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (tab === 'dashboard') document.getElementById('tab-dash-btn').classList.add('active');
+      if (tab === 'customer') document.getElementById('tab-cust-btn').classList.add('active');
+      if (tab === 'agent') document.getElementById('tab-agent-btn').classList.add('active');
+      if (tab === 'audit') document.getElementById('tab-audit-btn').classList.add('active');
+
+      document.getElementById('view-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
+      document.getElementById('view-customer').style.display = tab === 'customer' ? 'block' : 'none';
+      document.getElementById('view-agent').style.display = tab === 'agent' ? 'block' : 'none';
+      document.getElementById('view-audit').style.display = tab === 'audit' ? 'block' : 'none';
+    }
+
+    // MÜŞTERİ SEÇME
+    function pickCustomer(key) {
+      if (!CUSTOMERS[key]) return;
+      selectedCustKey = key;
+      document.querySelectorAll('.cust-card').forEach(c => c.classList.remove('active-cust'));
+      const card = document.getElementById(`card-${key}`);
+      if (card) card.classList.add('active-cust');
+      updateCustomerView();
+      loadAgentStepsFor(key);
+      const sel = document.getElementById('agent-cust-select');
+      if (sel) {
+        if (!sel.querySelector(`option[value="${key}"]`)) {
+          updateAgentCustomerDropdown();
+        }
+        sel.value = key;
+      }
+    }
+
+    function updateCustomerView() {
+      const c = CUSTOMERS[selectedCustKey];
+      if (!c) return;
+
+      // 1. Normal Bankacılık Arayüzü Alanları
+      const bankNameEl = document.getElementById('bank-cust-name');
+      if (bankNameEl) bankNameEl.innerText = c.name;
+      
+      const bankCityEl = document.getElementById('bank-cust-city');
+      if (bankCityEl) bankCityEl.innerText = c.city;
+
+      const ribbonLoanType = document.getElementById('ribbon-loan-type');
+      if (ribbonLoanType) ribbonLoanType.innerText = c.loanType;
+
+      const ribbonMonths = document.getElementById('ribbon-months');
+      if (ribbonMonths) ribbonMonths.innerText = c.months;
+
+      const loanTitleEl = document.getElementById('bank-loan-type-title');
+      if (loanTitleEl) loanTitleEl.innerText = c.loanType;
+
+      const loanInstEl = document.getElementById('bank-loan-installment-disp');
+      if (loanInstEl) loanInstEl.innerText = c.installment;
+
+      const loanDebtEl = document.getElementById('bank-loan-debt-disp');
+      if (loanDebtEl) loanDebtEl.innerText = c.total;
+
+      const loanDefEl = document.getElementById('bank-loan-total-deferred');
+      if (loanDefEl) loanDefEl.innerText = `Ötelenen: ${c.total}`;
+
+      const loanMonthsDesc = document.getElementById('bank-loan-months-desc');
+      if (loanMonthsDesc) loanMonthsDesc.innerText = `${c.months} faizsiz vade sonu erteleme`;
+
+      const loanDaskEl = document.getElementById('bank-loan-dask');
+      if (loanDaskEl) {
+        if (c.dask && c.dask.includes('Var')) {
+          loanDaskEl.innerHTML = '<span style="color:var(--status-green)">✓ DASK/Sigorta Var</span>';
+        } else if (c.dask && (c.dask.includes('Yok') || c.dask.includes('Danışmanlığı'))) {
+          loanDaskEl.innerHTML = '<span style="color:var(--status-red)">⚠ Sigorta/DASK Eksik</span>';
+        } else {
+          loanDaskEl.innerHTML = '<span style="color:var(--text-dim)">Sigorta: ' + c.dask + '</span>';
+        }
+      }
+
+      // Durum Durumu (Onaylandı / Devredildi / Vazgeçildi / Beklemede)
+      const loanBadge = document.getElementById('bank-loan-badge');
+      const ribbon = document.getElementById('bank-afet-ribbon');
+      const ribbonTag = document.getElementById('ribbon-tag');
+      const ribbonMsg = document.getElementById('ribbon-msg');
+      const btnRibbon = document.getElementById('btn-ribbon-action');
+      const btnStartFlow = document.getElementById('btn-start-flow');
+      const ribbonActions = document.getElementById('ribbon-actions-box');
+      const loanDecBtns = document.getElementById('bank-loan-decision-btns');
+
+      if (c.approved) {
+        if (loanBadge) {
+          loanBadge.style.background = 'var(--status-green-bg)';
+          loanBadge.style.color = 'var(--status-green)';
+          loanBadge.innerText = '✓ Erteleme Talebi Alındı - Personel Kontrolünde';
+        }
+        if (ribbon) ribbon.style.borderLeftColor = 'var(--status-green)';
+        if (ribbonTag) {
+          ribbonTag.innerText = '✓ Erteleme Talebiniz Alındı';
+          ribbonTag.style.color = 'var(--status-green)';
+        }
+        if (ribbonMsg) {
+          ribbonMsg.innerHTML = `<strong>${c.loanType}</strong> için <strong>${c.months} faizsiz erteleme</strong> talebiniz alındı. Banka personeli nihai kontrolü sonrası SMS ile bilgilendirileceksiniz.`;
+        }
+        if (btnRibbon) btnRibbon.innerText = '📋 Detayları Görüntüle';
+        if (btnStartFlow) btnStartFlow.innerText = '📋 Erteleme Detaylarını İncele';
+
+        if (ribbonActions) {
+          ribbonActions.innerHTML = `
+            <span style="font-size:12px;color:var(--status-green);font-weight:600;padding:6px 12px;background:rgba(46,158,104,0.15);border-radius:6px;border:1px solid rgba(46,158,104,0.3)">
+              ✓ Onay Alındı (Personel İncelemesinde)
+            </span>
+            <button class="btn-step-nav" style="padding:7px 12px;font-size:11.5px" onclick="openAfetFlowModal(3)">
+              Detaylar →
+            </button>
+            <button class="btn-decision-chat" style="padding:7px 12px;font-size:11.5px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+          `;
+        }
+        if (loanDecBtns) {
+          loanDecBtns.innerHTML = `
+            <span style="font-size:11.5px;color:var(--status-green);font-weight:600;padding:6px 10px;background:rgba(46,158,104,0.12);border-radius:6px;border:1px solid rgba(46,158,104,0.3);flex:1;text-align:center">
+              ✓ Onay Talebi Gönderildi
+            </span>
+            <button class="btn-decision-chat" style="padding:6px 10px;font-size:11px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+          `;
+        }
+      } else if (c.escalated) {
+        if (loanBadge) {
+          loanBadge.style.background = 'rgba(157, 139, 201, 0.12)';
+          loanBadge.style.color = '#B3A4DB';
+          loanBadge.innerText = '☎ Temsilci Görüşmesi Bekleniyor';
+        }
+        if (ribbon) ribbon.style.borderLeftColor = '#9D8BC9';
+        if (ribbonTag) {
+          ribbonTag.innerText = '☎ Öncelikli Çağrı Planlandı';
+          ribbonTag.style.color = '#B3A4DB';
+        }
+        if (ribbonMsg) {
+          ribbonMsg.innerHTML = `Afet Masası müşteri temsilcimiz kayıtlı telefonunuzdan sizi arayacaktır.`;
+        }
+        if (btnRibbon) btnRibbon.innerText = '☎ Talebi İncele';
+        if (btnStartFlow) btnStartFlow.innerText = '☎ Görüşme Detayları';
+
+        if (ribbonActions) {
+          ribbonActions.innerHTML = `
+            <span style="font-size:12px;color:#B3A4DB;font-weight:600;padding:6px 12px;background:rgba(157,139,201,0.12);border-radius:6px;border:1px solid rgba(157,139,201,0.25)">
+              ☎ Temsilcimiz Sizi Arayacak
+            </span>
+            <button class="btn-decision-chat" style="padding:7px 12px;font-size:11.5px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+          `;
+        }
+        if (loanDecBtns) {
+          loanDecBtns.innerHTML = `
+            <span style="font-size:11.5px;color:#B3A4DB;font-weight:600;padding:6px 10px;background:rgba(157,139,201,0.12);border-radius:6px;border:1px solid rgba(157,139,201,0.25);flex:1;text-align:center">
+              ☎ Temsilci Arayacak
+            </span>
+            <button class="btn-decision-chat" style="padding:6px 10px;font-size:11px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+          `;
+        }
+      } else if (c.declined) {
+        if (loanBadge) {
+          loanBadge.style.background = 'rgba(255, 255, 255, 0.08)';
+          loanBadge.style.color = '#94A3B8';
+          loanBadge.innerText = 'ℹ Tercih: Normal Ödeme Takvimine Devam';
+        }
+        if (ribbon) ribbon.style.borderLeftColor = '#64748B';
+        if (ribbonTag) {
+          ribbonTag.innerText = 'Normal Ödeme Tercihi';
+          ribbonTag.style.color = '#94A3B8';
+        }
+        if (ribbonMsg) {
+          ribbonMsg.innerHTML = `Erteleme hakkınızı şimdilik kullanmadınız. Afet Destek Paketi haklarınız afet süresince saklıdır; dilediğiniz an tekrar erteleme alabilirsiniz.`;
+        }
+        if (btnRibbon) btnRibbon.innerText = '🛡️ Yeniden Değerlendir';
+        if (btnStartFlow) btnStartFlow.innerText = '🛡️ Erteleme Planını Yeniden Aç';
+
+        if (ribbonActions) {
+          ribbonActions.innerHTML = `
+            <span style="font-size:12px;color:#94A3B8;font-weight:600;padding:6px 12px;background:rgba(255,255,255,0.06);border-radius:6px;border:1px solid var(--border-subtle)">
+              ℹ Normal Ödeme Tercihi
+            </span>
+            <button class="btn-decision-approve" style="padding:7px 14px;font-size:12px" onclick="approvePlan()">
+              ✓ Şimdi Onayla
+            </button>
+            <button class="btn-decision-chat" style="padding:7px 12px;font-size:11.5px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+          `;
+        }
+        if (loanDecBtns) {
+          loanDecBtns.innerHTML = `
+            <button class="btn-decision-approve" style="padding:6px 10px;font-size:11.5px;flex:1" onclick="approvePlan()">
+              ✓ Erteleme Al
+            </button>
+            <button class="btn-decision-chat" style="padding:6px 10px;font-size:11px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+          `;
+        }
+      } else {
+        if (loanBadge) {
+          loanBadge.style.background = 'var(--status-amber-bg)';
+          loanBadge.style.color = 'var(--status-amber)';
+          loanBadge.innerText = '⏳ Afet Erteleme Taslağınız Hazırlandı';
+        }
+        if (ribbon) ribbon.style.borderLeftColor = 'var(--ing-primary)';
+        if (ribbonTag) {
+          ribbonTag.innerText = 'Liman Afet Destek Paketi · Otomatik Durum Tespiti';
+          ribbonTag.style.color = 'var(--ing-primary)';
+        }
+        if (ribbonMsg) {
+          ribbonMsg.innerHTML = `Bölgenizde yaşanan afet sebebiyle <strong id="ribbon-loan-type">${c.loanType}</strong> için <strong><span id="ribbon-months">${c.months}</span> faizsiz erteleme taslağınız</strong> hazırlandı.`;
+        }
+        if (btnRibbon) btnRibbon.innerText = '🛡️ Erteleme Akışını Başlat →';
+        if (btnStartFlow) btnStartFlow.innerText = '🛡️ Erteleme Akışını İncele & Onayla →';
+
+        if (ribbonActions) {
+          ribbonActions.innerHTML = `
+            <button class="btn-decision-approve" style="padding:8px 14px;font-size:12px" onclick="approvePlan()">
+              ✓ Onayla
+            </button>
+            <button class="btn-decision-escalate" style="padding:8px 12px;font-size:12px" onclick="openEscalate()">
+              ☎ Temsilci Arasın
+            </button>
+            <button class="btn-decision-chat" style="padding:8px 12px;font-size:12px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+            <button class="btn-step-nav" style="padding:8px 10px;font-size:11.5px" onclick="openAfetFlowModal(1)" title="Detaylı Akış Sihirbazı">
+              Plan Detayları →
+            </button>
+          `;
+        }
+        if (loanDecBtns) {
+          loanDecBtns.innerHTML = `
+            <button class="btn-decision-approve" style="padding:8px 8px;font-size:12px" onclick="approvePlan()">
+              ✓ Onayla
+            </button>
+            <button class="btn-decision-escalate" style="padding:8px 8px;font-size:11.5px" onclick="openEscalate()">
+              ☎ Temsilci
+            </button>
+            <button class="btn-decision-chat" style="padding:8px 8px;font-size:11.5px" onclick="openChatAgent()">
+              💬 Sorum Var
+            </button>
+          `;
+        }
+      }
+
+      // Hızlı geçiş dropdown senkronizasyonu
+      const quickSel = document.getElementById('quick-cust-switch');
+      if (quickSel) quickSel.value = selectedCustKey;
+
+      // 2. Gömülü Akış Modal Alanları
+      const pName = document.getElementById('p-name');
+      if (pName) pName.innerText = c.name;
+
+      const pMsg = document.getElementById('p-msg');
+      if (pMsg) pMsg.innerText = `"${c.msg}"`;
+
+      const pSure = document.getElementById('p-sure');
+      if (pSure) pSure.innerText = c.months;
+
+      const pTaksit = document.getElementById('p-taksit');
+      if (pTaksit) pTaksit.innerText = c.installment;
+
+      const pToplam = document.getElementById('p-toplam');
+      if (pToplam) pToplam.innerText = c.total;
+
+      const pKredi = document.getElementById('p-kredi-tur');
+      if (pKredi) pKredi.innerText = c.loanType;
+
+      const pBelgeler = document.getElementById('p-belgeler');
+      if (pBelgeler) pBelgeler.innerHTML = c.docs.map(d => `<li>${d}</li>`).join('');
+
+      const pPriority = document.getElementById('cust-priority-tag');
+      if (pPriority) pPriority.innerText = c.priority;
+    }
+
+    // AFET MODU AKIŞ MODALI (AÇ / KAPAT & STEPPER GEÇİŞİ)
+    let currentFlowStep = 1;
+
+    function openAfetFlowModal(step = 1) {
+      const m = document.getElementById('afet-flow-modal');
+      if (m) {
+        m.style.display = 'flex';
+        m.classList.add('active');
+        goToFlowStep(step || 1);
+      }
+    }
+
+    function closeAfetFlowModal() {
+      const m = document.getElementById('afet-flow-modal');
+      if (m) {
+        m.style.display = 'none';
+        m.classList.remove('active');
+      }
+    }
+
+    function goToFlowStep(n) {
+      currentFlowStep = n;
+      for (let i = 1; i <= 3; i++) {
+        const content = document.getElementById(`flow-step-content-${i}`);
+        if (content) content.style.display = (i === n) ? 'block' : 'none';
+
+        const pill = document.getElementById(`flow-step-${i}`);
+        if (pill) {
+          pill.classList.remove('active', 'completed');
+          if (i === n) {
+            pill.classList.add('active');
+          } else if (i < n) {
+            pill.classList.add('completed');
+          }
+        }
+      }
+
+      // Adım 1 alanlarını seçili müşteriye göre dinamik güncelle
+      const c = CUSTOMERS[selectedCustKey];
+      if (c) {
+        const cityEl = document.getElementById('flow-step1-city');
+        if (cityEl) cityEl.innerText = c.city;
+        const addrEl = document.getElementById('flow-step1-address');
+        if (addrEl) addrEl.innerText = `${c.name} (${c.city})`;
+        const refEl = document.getElementById('flow-step1-ref');
+        if (refEl) refEl.innerText = c.city.includes('Rize') ? 'MGM-2026-RIZE-KIRMIZI' : 'AFAD-2026-TR-8812';
+        const evEl = document.getElementById('flow-step1-event');
+        if (evEl) evEl.innerText = c.city.includes('Rize') ? 'Rize Sel, Taşkın ve Heyelan Felaketi' : 'M7.4 Deprem Bildirimi (Doğu Anadolu Fayı)';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // SOHBET KATMANI MOTORU (AJAN C - KİŞİSELLEŞTİRİLMİŞ AFET ASİSTANI)
+    // ══════════════════════════════════════════════════════════════
+    const chatHistories = {};
+
+    function openChatAgent() {
+      const c = CUSTOMERS[selectedCustKey];
+      if (!c) return;
+
+      const modal = document.getElementById('afet-chat-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+      }
+
+      // Başlık ve Bağlam Bilgilerini Doldur (Model müşteriyi zaten tanır)
+      const subHdr = document.getElementById('chat-hdr-sub');
+      if (subHdr) {
+        subHdr.innerText = `Bağlam Yüklendi: ${c.name} · ${c.loanType} · ${c.months} Faizsiz (${c.installment}/ay)`;
+      }
+
+      const ctxText = document.getElementById('chat-context-text');
+      if (ctxText) {
+        ctxText.innerHTML = `<strong>${c.name}</strong> verileri yüklendi: ${c.loanType} · ${c.installment} taksit · ${c.dask} · <em>Kendinizi tanıtmanıza gerek yoktur.</em>`;
+      }
+
+      // Müşteri için geçmiş yoksa Ajan C açılış mesajını hazırla
+      if (!chatHistories[selectedCustKey] || chatHistories[selectedCustKey].length === 0) {
+        const now = new Date().toTimeString().split(' ')[0].slice(0, 5);
+        chatHistories[selectedCustKey] = [
+          {
+            sender: 'agent',
+            time: now,
+            text: `Merhaba Sayın <strong>${c.name}</strong>, geçmiş olsun. ${c.city} bölgesindeki afet sebebiyle adınıza hazırlanan <strong>${c.loanType}</strong> için <strong>${c.months} faizsiz erteleme planınız</strong> (aylık ${c.installment} taksit, toplam ötelenen ${c.total}) ve DASK/hasar durumunuz önümde açık.<br><br>Sizi tekrar soruya boğmadan yardımcı olmak için buradayım. Erteleme şartları, faiz durumu, gerekli evraklar veya ödeme takviminiz hakkında aklınıza takılan her şeyi sorabilirsiniz.`
+          }
+        ];
+
+        // Ajan adımını ve EventBus olayını kaydet
+        const timeFull = new Date().toTimeString().split(' ')[0];
+        eventLogs.unshift({
+          time: timeFull,
+          topic: 'chat.context.loaded',
+          desc: `Ajan C (Sohbet Katmanı): ${c.name} için kişiselleştirilmiş plan ve DASK bağlamı hafızaya yüklendi.`
+        });
+        renderEvents();
+
+        // Eğer müşterinin adımlarında sohbet_baglam_yukle yoksa ekle
+        if (!c.steps.some(s => s.tool === 'sohbet_baglam_yukle')) {
+          c.steps.push({
+            tool: 'sohbet_baglam_yukle',
+            agent: 'Ajan C (Sohbet Ajanı)',
+            in: `{"customer_id": "${c.id}", "kredi": "${c.loanType}", "erteleme": "${c.months}"}`,
+            out: `{"status": "CONTEXT_READY", "musteri": "${c.name}", "dask": "${c.dask}"}`,
+            ms: 32,
+            desc: `${c.name} müşterisinin plan ve sigorta parametreleri sıfır sorguyla LLM sohbet bağlamına yüklendi.`
+          });
+        }
+      }
+
+      renderChatMessages();
+    }
+
+    function closeChatAgent() {
+      const modal = document.getElementById('afet-chat-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function renderChatMessages() {
+      const container = document.getElementById('chat-messages-container');
+      if (!container) return;
+
+      const history = chatHistories[selectedCustKey] || [];
+
+      container.innerHTML = history.map(msg => {
+        if (msg.sender === 'user') {
+          return `
+            <div class="chat-bubble user">
+              <div>${escapeHtml(msg.text)}</div>
+              <div class="chat-time">${msg.time} · Siz</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="chat-bubble agent">
+              <div style="font-size:11px;font-weight:700;color:var(--ing-primary);margin-bottom:4px;display:flex;align-items:center;gap:6px">
+                <span>🤖 Liman Destek Asistanı (Ajan C)</span>
+              </div>
+              <div style="line-height:1.55;font-size:13px">${msg.text}</div>
+              <div class="chat-time">${msg.time} · Otonom Doğrulandı</div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function handleChatSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('chat-user-input');
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      sendChatMessage(text);
+    }
+
+    function askQuickQuestion(questionText) {
+      sendChatMessage(questionText);
+    }
+
+    function sendChatMessage(text) {
+      const c = CUSTOMERS[selectedCustKey];
+      if (!c) return;
+
+      if (!chatHistories[selectedCustKey]) {
+        chatHistories[selectedCustKey] = [];
+      }
+
+      const now = new Date().toTimeString().split(' ')[0].slice(0, 5);
+      chatHistories[selectedCustKey].push({
+        sender: 'user',
+        time: now,
+        text: text
+      });
+
+      renderChatMessages();
+
+      // Yazıyor göstergesi ekle
+      const container = document.getElementById('chat-messages-container');
+      const typingIndicator = document.createElement('div');
+      typingIndicator.id = 'chat-typing-indicator';
+      typingIndicator.className = 'chat-bubble agent';
+      typingIndicator.innerHTML = `
+        <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+          <span>🤖 Ajan C yanıtlıyor</span>
+          <span style="letter-spacing:2px">...</span>
+        </div>
+      `;
+      container.appendChild(typingIndicator);
+      container.scrollTop = container.scrollHeight;
+
+      setTimeout(() => {
+        const ind = document.getElementById('chat-typing-indicator');
+        if (ind) ind.remove();
+
+        const reply = generateAgentChatReply(text, c);
+        const replyTime = new Date().toTimeString().split(' ')[0].slice(0, 5);
+        chatHistories[selectedCustKey].push({
+          sender: 'agent',
+          time: replyTime,
+          text: reply
+        });
+
+        // EventBus ve Ajan Step izi
+        const fullTime = new Date().toTimeString().split(' ')[0];
+        eventLogs.unshift({
+          time: fullTime,
+          topic: 'chat.agent.replied',
+          desc: `Ajan C (Sohbet): "${text.slice(0, 28)}..." sorusunu kural guardrail'leri ile yanıtladı.`
+        });
+        renderEvents();
+
+        c.steps.push({
+          tool: 'soru_cevapla',
+          agent: 'Ajan C (Sohbet Ajanı)',
+          in: `{"soru": "${text.replace(/"/g, '')}", "baglam": "${c.loanType} - ${c.months}"}`,
+          out: `{"yanit_durumu": "VALIDATED", "guardrail": "FAIZSIZ_VE_SEFFAF"}`,
+          ms: 45,
+          desc: `Müşteri sorusu kurum afet ilkeleri ve mevzuat sınırlarıyla yanıtlandı.`
+        });
+
+        renderChatMessages();
+      }, 400);
+    }
+
+    function generateAgentChatReply(query, c) {
+      const q = query.toLowerCase();
+
+      if (q.includes('faiz') || q.includes('masraf') || q.includes('ceza') || q.includes('maliyet') || q.includes('ekstra')) {
+        return `Kesinlikle <strong>hiçbir faiz, ek masraf, gecikme cezası veya komisyon yansıtılmaz</strong>.<br><br>Yasal afet mevzuatı ve bankamızın afet politikası gereğince <strong>${c.months}</strong> boyunca toplam <strong>${c.total}</strong> tutarındaki taksitleriniz <strong>%0 faizle</strong> doğrudan vade sonuna ötelenir. Anaparanızda da hiçbir artış olmaz.`;
+      }
+
+      if (q.includes('dask') || q.includes('sigorta') || q.includes('poliçe') || q.includes('hasar')) {
+        if (c.loanType === 'Konut Kredisi' || c.loanType.includes('Konut')) {
+          if (c.dask && c.dask.includes('Var')) {
+            return `Konut kredinize bağlı <strong>DASK poliçeniz sistemimizde kayıtlı ve onaylıdır</strong>. Erteleme talebinizin yürürlüğe girmesi için ek bir sigorta işlemi yapmanıza gerek yoktur. Afet Masamız DASK tazminat süreçlerini de doğrudan koordine etmektedir.`;
+          } else {
+            return `Konutunuz için aktif bir DASK poliçesi sistemimizde otomatik doğrulanamamıştır. Ancak bu durum erteleme başvurunuzu engellemez. Dilerseniz aşağıdaki <strong>[☎ Temsilci Arasın]</strong> butonuna tıklayabilirsiniz; uzmanımız sigorta ve haklarınız konusunda sizi telefonla ücretsiz bilgilendirecektir.`;
+          }
+        } else {
+          return `Kullandığınız <strong>${c.loanType}</strong> için DASK sigortası şartı aranmamaktadır. Sadece afet bölgesi eşleşmeniz yeterlidir.`;
+        }
+      }
+
+      if (q.includes('evrak') || q.includes('belge') || q.includes('zaman') || q.includes('teslim') || q.includes('son gün')) {
+        return `Afet şartlarında mağduriyet yaşamamanız için evrak teslim süreniz <strong>60 gün</strong> olarak tanımlanmıştır.<br><br>Gerekli evraklar: <em>${c.docs.map(d => d.replace(/<[^>]*>?/gm, '')).join(', ')}</em>.<br>Evrakları hemen bugün teslim etmek zorunda değilsiniz. Şimdi planı onayladığınızda ertelemeniz derhal başlar; evraklarınızı 60 gün içinde Liman Mobil'den veya şubelerimizden yükleyebilirsiniz.`;
+      }
+
+      if (q.includes('kredi not') || q.includes('sicil') || q.includes('puan') || q.includes('kkb') || q.includes('findeks') || q.includes('yasal takip')) {
+        return `Bu erteleme işlemi kredi notunuzu (Findeks/KKB puanı) <strong>asla olumsuz etkilemez</strong>. BDDK ve KKB sistemlerine "Afet Sebebiyle Yapılandırma/Erteleme" koduyla bildirilir; hiçbir gecikme, ihtar veya yasal takip kaydı düşmez.`;
+      }
+
+      if (q.includes('uzat') || q.includes('6 ay') || q.includes('sure') || q.includes('daha fazla')) {
+        return `Hazırlanan taslağınız <strong>${c.months}</strong> olarak tanımlanmıştır. Sistemimizin kod üst sınırı azami 6 aydır. Süreç bittiğinde bölgedeki durumun devam etmesi halinde <strong>[☎ Temsilci Arasın]</strong> talebinde bulunarak süreyi 6 aya kadar uzatma opsiyonunu değerlendirebilirsiniz.`;
+      }
+
+      if (q.includes('istemiyorum') || q.includes('vazgeç') || q.includes('normal') || q.includes('ödemek')) {
+        return `Erteleme tamamen sizin takdirinizdedir, hiçbir zorunluluk yoktur. Eğer normal ödeme takviminize devam etmek isterseniz hemen aşağıdaki <strong>[✕ Vazgeç (Normal Öde)]</strong> butonuna basabilirsiniz. Afet destek haklarınız afet süresince saklı kalır; dilediğiniz zaman tekrar erteleme talep edebilirsiniz.`;
+      }
+
+      if (q.includes('temsilci') || q.includes('ara') || q.includes('telefon') || q.includes('insan')) {
+        return `Konuyu uzman bir bankacıyla detaylandırmak isterseniz aşağıdaki <strong>[☎ Temsilci Arasın]</strong> butonuna tıklayabilirsiniz. Afet Masası temsilcimiz kayıtlı telefonunuzdan sizi en kısa sürede arayacaktır.`;
+      }
+
+      // Genel / Varsayılan Bağlamsal Yanıt
+      return `Sayın <strong>${c.name}</strong>, ${c.loanType} borcunuz (aylık ${c.installment}, ötelenen toplam ${c.total}) afet koruma paketimiz kapsamındadır.<br><br><strong>Karar tamamen sizdedir:</strong><br>• Dilerseniz <strong>[✓ Planı Onayla]</strong> ile faizsiz ertelemeyi hemen başlatabilirsiniz,<br>• <strong>[☎ Temsilci Arasın]</strong> ile özel durumunuzu uzmanımızla görüşebilirsiniz,<br>• Ya da <strong>[✕ Vazgeç (Normal Öde)]</strong> seçerek mevcut takviminizde kalabilirsiniz.`;
+    }
+
+    // SOHBETTEN KARARA BAĞLAMA FONKSİYONLARI (3 SEÇENEK)
+    function approvePlanFromChat() {
+      closeChatAgent();
+      approvePlan();
+    }
+
+    function openEscalateFromChat() {
+      closeChatAgent();
+      openEscalate();
+    }
+
+    function optOutPlanFromChat() {
+      closeChatAgent();
+      optOutPlan();
+    }
+
+    // MÜŞTERİ ERTELEMEYİ REDDEDİP NORMAL ÖDEMEYİ SEÇERSE
+    function optOutPlan() {
+      const c = CUSTOMERS[selectedCustKey];
+      if (!c) return;
+
+      c.declined = true;
+      c.approved = false;
+      c.escalated = false;
+
+      const now = new Date().toTimeString().split(' ')[0];
+      eventLogs.unshift({
+        time: now,
+        topic: 'plan.declined',
+        desc: `${c.name} (${c.id}) erteleme almamayı ve normal ödeme takvimine devam etmeyi tercih etti.`
+      });
+      renderEvents();
+
+      const auditBox = document.getElementById('audit-log-box');
+      if (auditBox) {
+        auditBox.innerHTML = `<div>[${now}] <strong style="color:#94A3B8">plan.declined</strong> → ${c.name} normal takvimi seçti (hakları saklı)</div>` + auditBox.innerHTML;
+      }
+
+      closeAfetFlowModal();
+      updateCustomerView();
+
+      const badgeEl = document.getElementById(`badge-${selectedCustKey}`);
+      if (badgeEl) badgeEl.innerText = 'ℹ Normal Ödeme Tercihi';
+
+      c.steps.push({
+        tool: 'karar_bagla',
+        agent: 'Ajan C (Sohbet Ajanı)',
+        in: `{"musteri_secimi": "VAZGEC_NORMAL_ODE"}`,
+        out: `{"status": "NORMAL_TAKVIM", "hak_sakli": true}`,
+        ms: 28,
+        desc: 'Müşteri tercihi sisteme işlendi, hakları afet boyunca saklı tutuldu.'
+      });
+
+      alert(`Sayın ${c.name},\n\nTercihiniz kaydedildi. Normal ödeme takviminiz geçerliliğini korumaktadır.\n\nAfet destek paketi haklarınız afet süresince saklıdır; dilediğiniz zaman Liman Mobil veya şubenizden erteleme talebinde bulunabilirsiniz.`);
+    }
+
+    // AFET SİMÜLATÖRÜ BARINI AÇ / KAPAT
+    function toggleSimBar() {
+      const b = document.getElementById('disaster-ctrl-bar');
+      if (b) {
+        b.style.display = (b.style.display === 'none' || b.style.display === '') ? 'flex' : 'none';
+      }
+    }
+
+    // DÜŞEN BİLDİRİMİ KAPAT
+    function dismissDropBanner() {
+      const b = document.getElementById('disaster-drop-banner');
+      if (b) b.style.display = 'none';
+    }
+
+    // AGENT MÜŞTERİ DROPDOWNINI GÜNCELLE
+    function updateAgentCustomerDropdown() {
+      const sel = document.getElementById('agent-cust-select');
+      if (!sel || sel.querySelector('option[value="dursun"]')) return;
+      const optGroup = document.createElement('optgroup');
+      optGroup.label = '🌊 Rize Sel & Heyelan Müşterileri (+5)';
+      optGroup.innerHTML = `
+        <option value="dursun">🌊 Dursun Ali Reis (69 yaş · Rize/Çayeli · Konut/Tarım · 4 Ay)</option>
+        <option value="fadime">🌊 Fadime Kaya (71 yaş · Rize/Ardeşen · Konut · 4 Ay)</option>
+        <option value="temel">🌊 Temel Karadeniz (42 yaş · Rize/Merkez · İhtiyaç · 3 Ay)</option>
+        <option value="asiye">🌊 Asiye Yıldız (38 yaş · Rize/Fındıklı · Esnaf · 3 Ay)</option>
+        <option value="idris">🌊 İdris Çepni (66 yaş · Rize/Güneysu · Temsilci Devri · 4 Ay)</option>
+      `;
+      sel.appendChild(optGroup);
+    }
+
+    // 5 YENİ RİZE MÜŞTERİ KARTINI KUYRUĞA ENJEKTE ET
+    let rizeCardsInjected = false;
+    function injectRizeCustomerCards() {
+      if (rizeCardsInjected) return;
+      rizeCardsInjected = true;
+
+      const queue = document.getElementById('customer-queue-container');
+      if (!queue) return;
+
+      const rizeCardsHtml = `
+        <!-- 🌊 RİZE MÜŞTERİ 1: DURSUN ALİ REİS -->
+        <div class="cust-card" id="card-dursun" onclick="pickCustomer('dursun')" style="border-left:4px solid #4D7BB0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;font-size:14px">👴 Dursun Ali Reis (69 yaş)</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge-pill badge-rize-flood">🌊 Rize Sel Afeti</span>
+              <span class="badge-pill" style="background:var(--status-red-bg);color:#D47A7A">Yüksek Öncelik</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+            <div>İlçe: <strong style="color:var(--text-main)">Rize / Çayeli</strong></div>
+            <div>Kredi: <strong style="color:var(--text-main)">Tarım & Konut (16.200 ₺)</strong></div>
+            <div>DASK: <strong style="color:var(--status-green)">✓ Var</strong></div>
+            <div>Erteleme: <strong style="color:var(--ing-primary)">4 Ay (3+1)</strong></div>
+          </div>
+          <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+            "Sayın Dursun Ali Bey, geçmiş olsun. Rize Çayeli ilçemizdeki sel felaketi sebebiyle çay tarımı ve konut krediniz için 4 aylık erteleme talebiniz hazırlandı..."
+          </div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+            <span style="color:var(--status-amber);font-weight:600" id="badge-dursun">⏳ Taslak Hazırlandı → Müşteri Onayı Bekleniyor</span>
+            <span style="color:var(--text-dim)">Ötelenen: 64.800 ₺</span>
+          </div>
+        </div>
+
+        <!-- 🌊 RİZE MÜŞTERİ 2: FADİME KAYA -->
+        <div class="cust-card" id="card-fadime" onclick="pickCustomer('fadime')" style="border-left:4px solid #4D7BB0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;font-size:14px">👵 Fadime Kaya (71 yaş)</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge-pill badge-rize-flood">🌊 Rize Sel Afeti</span>
+              <span class="badge-pill" style="background:var(--status-red-bg);color:#D47A7A">Yüksek Öncelik</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+            <div>İlçe: <strong style="color:var(--text-main)">Rize / Ardeşen</strong></div>
+            <div>Kredi: <strong style="color:var(--text-main)">Konut (12.400 ₺)</strong></div>
+            <div>DASK: <strong style="color:var(--status-green)">✓ Var</strong></div>
+            <div>Erteleme: <strong style="color:var(--ing-primary)">4 Ay (3+1)</strong></div>
+          </div>
+          <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+            "Sayın Fadime Hanım, geçmiş olsun. Rize Ardeşen taşkın hattı kapsamında konut krediniz için 4 aylık erteleme planı oluşturuldu..."
+          </div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+            <span style="color:var(--status-amber);font-weight:600" id="badge-fadime">⏳ Taslak Hazırlandı → Müşteri Onayı Bekleniyor</span>
+            <span style="color:var(--text-dim)">Ötelenen: 49.600 ₺</span>
+          </div>
+        </div>
+
+        <!-- 🌊 RİZE MÜŞTERİ 3: TEMEL KARADENİZ -->
+        <div class="cust-card" id="card-temel" onclick="pickCustomer('temel')" style="border-left:4px solid #4D7BB0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;font-size:14px">👨 Temel Karadeniz (42 yaş)</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge-pill badge-rize-flood">🌊 Rize Sel Afeti</span>
+              <span class="badge-pill" style="background:var(--status-blue-bg);color:var(--status-blue)">Normal Öncelik</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+            <div>İlçe: <strong style="color:var(--text-main)">Rize / Merkez</strong></div>
+            <div>Kredi: <strong style="color:var(--text-main)">İhtiyaç (5.800 ₺)</strong></div>
+            <div>DASK: <strong style="color:var(--text-dim)">Uygulanmaz</strong></div>
+            <div>Erteleme: <strong style="color:var(--ing-primary)">3 Ay</strong></div>
+          </div>
+          <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+            "Sayın Temel Bey, geçmiş olsun. Rize merkezdeki su baskınları kapsamında ihtiyaç krediniz için 3 aylık erteleme hazırlandı..."
+          </div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+            <span style="color:var(--status-amber);font-weight:600" id="badge-temel">⏳ Taslak Hazırlandı → Müşteri Onayı Bekleniyor</span>
+            <span style="color:var(--text-dim)">Ötelenen: 17.400 ₺</span>
+          </div>
+        </div>
+
+        <!-- 🌊 RİZE MÜŞTERİ 4: ASİYE YILDIZ -->
+        <div class="cust-card" id="card-asiye" onclick="pickCustomer('asiye')" style="border-left:4px solid #4D7BB0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;font-size:14px">👩 Asiye Yıldız (38 yaş)</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge-pill badge-rize-flood">🌊 Rize Sel Afeti</span>
+              <span class="badge-pill" style="background:var(--status-blue-bg);color:var(--status-blue)">Normal Öncelik</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+            <div>İlçe: <strong style="color:var(--text-main)">Rize / Fındıklı</strong></div>
+            <div>Kredi: <strong style="color:var(--text-main)">Esnaf (8.500 ₺)</strong></div>
+            <div>DASK: <strong style="color:var(--text-dim)">Uygulanmaz</strong></div>
+            <div>Erteleme: <strong style="color:var(--ing-primary)">3 Ay</strong></div>
+          </div>
+          <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+            "Sayın Asiye Hanım, geçmiş olsun. Rize Fındıklı heyelan afeti dolayısıyla esnaf krediniz için 3 aylık erteleme hazırlandı..."
+          </div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+            <span style="color:var(--status-amber);font-weight:600" id="badge-asiye">⏳ Taslak Hazırlandı → Müşteri Onayı Bekleniyor</span>
+            <span style="color:var(--text-dim)">Ötelenen: 25.500 ₺</span>
+          </div>
+        </div>
+
+        <!-- 🌊 RİZE MÜŞTERİ 5: İDRİS ÇEPNİ -->
+        <div class="cust-card" id="card-idris" onclick="pickCustomer('idris')" style="border-left:4px solid #C54E4E">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-weight:700;font-size:14px">👴 İdris Çepni (66 yaş)</span>
+            <div style="display:flex;gap:6px">
+              <span class="badge-pill badge-rize-flood">🌊 Rize Sel Afeti</span>
+              <span class="badge-pill" style="background:var(--status-red-bg);color:#D47A7A">Yüksek Öncelik</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);font-size:11.5px;color:var(--text-muted);margin-bottom:8px">
+            <div>İlçe: <strong style="color:var(--text-main)">Rize / Güneysu</strong></div>
+            <div>Kredi: <strong style="color:var(--text-main)">Konut (10.500 ₺)</strong></div>
+            <div>DASK/Sel: <strong style="color:#D47A7A">⚠ Sigorta Yok</strong></div>
+            <div>Erteleme: <strong style="color:var(--ing-primary)">4 Ay</strong></div>
+          </div>
+          <div style="font-size:12px;color:#A0AEC0;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:4px;font-style:italic">
+            "Sayın İdris Bey, geçmiş olsun. Güneysu sel felaketi sebebiyle 4 aylık erteleme taslağınız hazırlandı. Konutunuzun sigortasına ulaşılamadığından temsilcimiz sizi arayacaktır..."
+          </div>
+          <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+            <span style="color:#B3A4DB;font-weight:600" id="badge-idris">☎ Temsilciye Devredildi (Hasar & Sigorta Danışmanlığı)</span>
+            <span style="color:var(--text-dim)">Ötelenen: 42.000 ₺</span>
+          </div>
+        </div>
+      `;
+
+      queue.innerHTML = rizeCardsHtml + queue.innerHTML;
+    }
+
+    // 🌊 RİZE SEL VE HEYELAN AFETİNİ TETİKLE (+5 MÜŞTERİ DOĞRUDAN DÜŞSÜN)
+    function triggerRizeFloodSimulation() {
+      const btnFlood = document.getElementById('btn-trigger-flood');
+      if (btnFlood) {
+        btnFlood.disabled = true;
+        btnFlood.innerHTML = '<span>⏳</span> Sel Verisi Alınıyor...';
+      }
+
+      // 1. Üst Afet Bildirim Bannerı Düşsün (Slide down animasyonu)
+      const dropBanner = document.getElementById('disaster-drop-banner');
+      if (dropBanner) {
+        dropBanner.style.display = 'block';
+        dropBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // 2. Afet Kontrol Barı Doğrudan Güncellensin
+      const disasterTag = document.getElementById('current-disaster-tag');
+      disasterTag.innerText = '🌊 AKTİF AFET · SEL & HEYELAN';
+      disasterTag.style.background = 'rgba(77, 123, 176, 0.2)';
+      disasterTag.style.color = '#7EA5D9';
+      disasterTag.style.borderColor = 'rgba(126, 165, 217, 0.35)';
+
+      document.getElementById('current-disaster-title').innerText = 'Rize Sel, Taşkın ve Heyelan Felaketi (Meteoroloji Kırmızı Kod)';
+      document.getElementById('current-disaster-desc').innerHTML = 'Etkilenen İller/İlçeler: <strong>Rize (Çayeli · Ardeşen · Fındıklı · Güneysu · İkizdere)</strong> · Kaynak: <strong>Meteoroloji Genel Müd. / AFAD</strong>';
+
+      // 3. Canlı Pipeline Göstergesi
+      const pBox = document.getElementById('pipeline-box');
+      const pBar = document.getElementById('progress-bar');
+      const pText = document.getElementById('pipeline-status-text');
+      const pPct = document.getElementById('pipeline-percent-text');
+      const pSub = document.getElementById('pipeline-sub-text');
+      pBox.style.display = 'block';
+      pBar.style.width = '30%';
+      pText.innerText = 'Rize Meteorolojik Kırmızı Kod Akışı Alındı...';
+      pPct.innerText = '30%';
+      pSub.innerText = 'Çayeli, Ardeşen, Fındıklı taşkın koordinatları taranıyor...';
+
+      // 4. Doğrudan Müşteri Sayısını Artır (+5 Kişi: 258 -> 263)
+      document.getElementById('stat-etkilenen').innerText = '263';
+      document.getElementById('stat-oncelik').innerText = '79'; // +3 yaşlı/hassas Rize müşterisi
+      document.getElementById('stat-taslak').innerText = '263';
+      document.getElementById('stat-hacim').innerText = '₺8.71M'; // +₺173.800
+      
+      const now = new Date().toTimeString().split(' ')[0];
+
+      // 5. EventBus Canlı Akışına Olayları Düşür
+      eventLogs.unshift({
+        time: now,
+        topic: 'disaster.declared',
+        desc: '🌊 AFAD & MGM KIRMIZI KOD: Rize Sel ve Heyelan Bildirimi sisteme düştü (m²\'ye 180kg yağış).'
+      });
+      eventLogs.unshift({
+        time: now,
+        topic: 'customer.affected',
+        desc: '📍 Rize taşkın havzasından +5 YENİ MÜŞTERİ doğrudan sisteme işlendi (Toplam 263 müşteri).'
+      });
+      eventLogs.unshift({
+        time: now,
+        topic: 'agent.loop.start',
+        desc: 'Ajan A (Planlayıcı) cust_rize_001 (Dursun Ali Reis, 69 yaş) için tetiklendi.'
+      });
+      eventLogs.unshift({
+        time: now,
+        topic: 'plan.drafted',
+        desc: 'cust_rize_001 (Dursun Ali Reis) için 4 ay (3+1) çay tarım & konut kredisi ertelemesi üretildi.'
+      });
+      eventLogs.unshift({
+        time: now,
+        topic: 'plan.drafted',
+        desc: 'cust_rize_002 (Fadime Kaya) için 4 ay (3+1) Ardeşen konut erteleme taslağı üretildi.'
+      });
+      eventLogs.unshift({
+        time: now,
+        topic: 'plan.escalated',
+        desc: 'cust_rize_005 (İdris Çepni): Sel poliçesi/DASK eksikliği sebebiyle İnsan Müşteri Temsilcisine aktarıldı.'
+      });
+      renderEvents();
+
+      // Denetim İzi (Audit Log)
+      const auditBox = document.getElementById('audit-log-box');
+      if (auditBox) {
+        auditBox.innerHTML = `<div>[${now}] <strong style="color:#7EA5D9">disaster.declared</strong> → Rize Sel Felaketi Kırmızı Kod (+5 Müşteri)</div>` + auditBox.innerHTML;
+        auditBox.innerHTML = `<div>[${now}] <strong style="color:var(--status-amber)">plan.drafted</strong> → Rize Dursun Ali Reis (4 ay çay tarım/konut)</div>` + auditBox.innerHTML;
+      }
+
+      // 6. 5 Yeni Rize Müşterisini Kuyruğa Ekle
+      injectRizeCustomerCards();
+
+      // 7. Ajan Müşteri Seçim Kutusunu Güncelle
+      updateAgentCustomerDropdown();
+
+      // Aşama 2: İlerleme
+      setTimeout(() => {
+        pBar.style.width = '75%';
+        pText.innerText = 'Rize Sel Afeti Kural Motoru & Ajan Taslakları Tamamlandı';
+        pPct.innerText = '75%';
+        pSub.innerText = '+5 Rize müşterisi için erteleme taslakları kod üst sınırlarıyla üretildi.';
+      }, 700);
+
+      // Aşama 3: Tamamlandı
+      setTimeout(() => {
+        pBar.style.width = '100%';
+        pText.innerText = '✓ Rize Sel Felaketi Başarıyla Entegre Edildi (+5 Müşteri Kuyrukta)';
+        pPct.innerText = '100%';
+        pSub.innerText = 'Karar insanda: Müşteri onayı ve çalışan inceleme havuzu hazır.';
+
+        if (btnFlood) {
+          btnFlood.disabled = false;
+          btnFlood.innerHTML = '<span>✓</span> Rize Sel Afeti Aktif (+5 Müşteri Eklendi)';
+        }
+
+        // Otomatik olarak ilk Rize müşterisini seçip gösterelim
+        pickCustomer('dursun');
+      }, 1300);
+    }
+
+    // ─── GÜÇLENDİRİLMİŞ AJAN STÜDYOSU VE TOOL ÇAĞRI MOTORU ───
+    let currentAgentStepFilter = 'all';
+
+    function filterAgentSteps(filterType) {
+      currentAgentStepFilter = filterType;
+      document.querySelectorAll('.agent-filter-btn').forEach(b => b.classList.remove('active'));
+      if (filterType === 'all') document.getElementById('filter-btn-all').classList.add('active');
+      if (filterType === 'Ajan A (Planlayıcı)') document.getElementById('filter-btn-plan').classList.add('active');
+      if (filterType === 'Ajan B (İletişimci)') document.getElementById('filter-btn-comm').classList.add('active');
+      if (filterType === 'Ajan C (Sohbet Ajanı)') {
+        const btn = document.getElementById('filter-btn-chat');
+        if (btn) btn.classList.add('active');
+      }
+      if (filterType === 'rule') document.getElementById('filter-btn-rule').classList.add('active');
+      loadAgentStepsFor(selectedCustKey);
+    }
+
+    function toggleToolSchemas() {
+      const b = document.getElementById('tool-schemas-box');
+      if (b) {
+        b.style.display = (b.style.display === 'none' || b.style.display === '') ? 'block' : 'none';
+      }
+    }
+
+    function copyJsonPayload(btn, str) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(str);
+        const originalText = btn.innerText;
+        btn.innerText = '✓ Kopyalandı!';
+        btn.style.background = 'var(--status-green)';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.background = 'rgba(255, 255, 255, 0.08)';
+        }, 1500);
+      }
+    }
+
+    function copyAllTraces(key) {
+      const c = CUSTOMERS[key || selectedCustKey];
+      if (!c) return;
+      const fullPayload = JSON.stringify({
+        customer_id: c.id,
+        customer_name: c.name,
+        disaster_region: c.city,
+        loan_type: c.loanType,
+        total_deferred: c.total,
+        agent_steps: c.steps
+      }, null, 2);
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(fullPayload);
+        alert(`Sayın ${c.name} için üretilen tüm Ajan & Tool çalıştırma izleri JSON formatında panoya kopyalandı!`);
+      }
+    }
+
+    // AJAN ADIMLARINI DETAYLI VE FİLTRELİ YÜKLE
+    function loadAgentStepsFor(key) {
+      const c = CUSTOMERS[key];
+      if (!c) return;
+      selectedCustKey = key;
+
+      // Dropdown senkronizasyonu
+      const sel = document.getElementById('agent-cust-select');
+      if (sel) sel.value = key;
+
+      // Toplam gecikme ve metrik hesabı
+      let totalMs = 0;
+      c.steps.forEach(s => totalMs += (s.ms || 50));
+      const latEl = document.getElementById('stat-agent-latency');
+      if (latEl) latEl.innerText = `${(totalMs / 1000).toFixed(2)} sn`;
+
+      // Filtreleme
+      let filteredSteps = c.steps;
+      if (currentAgentStepFilter === 'Ajan A (Planlayıcı)') {
+        filteredSteps = c.steps.filter(s => s.agent.includes('Planlayıcı'));
+      } else if (currentAgentStepFilter === 'Ajan B (İletişimci)') {
+        filteredSteps = c.steps.filter(s => s.agent.includes('İletişimci'));
+      } else if (currentAgentStepFilter === 'Ajan C (Sohbet Ajanı)') {
+        filteredSteps = c.steps.filter(s => s.agent.includes('Sohbet') || s.tool.includes('sohbet') || s.tool.includes('soru') || s.tool.includes('karar'));
+      } else if (currentAgentStepFilter === 'rule') {
+        filteredSteps = c.steps.filter(s => s.tool.includes('erteleme') || s.tool.includes('oncelik') || s.tool.includes('devir'));
+      }
+
+      const box = document.getElementById('agent-steps-timeline');
+      if (!box) return;
+
+      if (filteredSteps.length === 0) {
+        box.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted)">Bu filtre kriterine uygun tool çağrısı bulunamadı.</div>`;
+        return;
+      }
+
+      box.innerHTML = filteredSteps.map((s, idx) => {
+        const isPlanAgent = s.agent.includes('Planlayıcı');
+        const isChatAgent = s.agent.includes('Sohbet');
+        let badgeColor = 'rgba(77, 123, 176, 0.15)';
+        let badgeTextColor = '#7EA5D9';
+        if (isPlanAgent) {
+          badgeColor = 'rgba(217, 83, 0, 0.15)';
+          badgeTextColor = 'var(--ing-primary)';
+        } else if (isChatAgent) {
+          badgeColor = 'rgba(46, 158, 104, 0.15)';
+          badgeTextColor = '#3DAF7E';
+        }
+
+        let guardrailNote = '✓ Kod Üst Sınırı (Max 6 Ay) & Bankacılık Guardrail Denetimi Geçti';
+        if (s.tool.includes('oncelik')) {
+          guardrailNote = '✓ 65+ Yaş & Hassas Durum Öncelik Kuralı (#REG-702) İşletildi';
+        } else if (s.tool.includes('iletisimci')) {
+          guardrailNote = '✓ Saygılı Dil & Ticari Pazarlama Filtresi (%100 Vaatsiz ve Şeffaf)';
+        } else if (s.tool.includes('sohbet') || s.tool.includes('soru') || s.tool.includes('karar')) {
+          guardrailNote = '✓ In-Context Doğrulama: Müşteri Verisi Otomatik Enjekte Edildi & Karar İnsanda Bırakıldı';
+        } else if (s.tool.includes('devir')) {
+          guardrailNote = '✓ Zorunlu İnsan Müdahalesi (HITL) Devir Bayrağı Kontrol Edildi';
+        }
+
+        const cotReasoning = s.cot || `Bu adımda ${s.tool} aracı tetiklenerek ${c.name} için deterministik bağlam oluşturuldu ve sonraki karar aşamasına aktarıldı.`;
+
+        const fullJsonStr = escapeHtml(JSON.stringify({ input: s.in, output: s.out }, null, 2));
+
+        return `
+          <div class="agent-step-item">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="step-badge" style="background:${badgeColor};color:${badgeTextColor}">
+                  Adım ${idx + 1} · ${s.agent}
+                </span>
+                <strong style="color:#FFFFFF;font-size:13.5px;font-family:'JetBrains Mono',monospace">${s.tool}()</strong>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:11px;color:var(--status-green);background:rgba(46,158,104,0.12);padding:2px 8px;border-radius:4px;font-weight:600">
+                  ● HTTP 200 OK
+                </span>
+                <span style="font-family:'JetBrains Mono';font-size:11.5px;color:var(--text-muted);font-weight:600">
+                  ⏱️ ${s.ms} ms
+                </span>
+              </div>
+            </div>
+
+            <!-- AJAN AKIL YÜRÜTME / CHAIN OF THOUGHT -->
+            <div class="step-cot-box">
+              <strong style="color:#7EA5D9">🧠 Ajan Akıl Yürütme (Chain of Thought):</strong> ${cotReasoning}
+            </div>
+
+            <div style="font-size:12px;color:var(--text-muted);margin:6px 0 2px">
+              <strong>İşlev:</strong> ${s.desc}
+            </div>
+
+            <!-- GİRDİ VE ÇIKTI JSON KUTUSU -->
+            <div class="step-code">
+              <button class="step-copy-btn" onclick="copyJsonPayload(this, '${escapeHtml(JSON.stringify({ input: s.in, output: s.out }))}')">
+                📋 JSON Kopyala
+              </button>
+              <div><span style="color:#7EA5D9;font-weight:600">Girdi (Input):</span> ${escapeHtml(typeof s.in === 'string' ? s.in : JSON.stringify(s.in))}</div>
+              <div style="margin-top:6px"><span style="color:#3DAF7E;font-weight:600">Çıktı (Output):</span> ${escapeHtml(typeof s.out === 'string' ? s.out : JSON.stringify(s.out))}</div>
+            </div>
+
+            <!-- GUARDRAIL DOĞRULAMASI -->
+            <div class="step-guardrail-tag">
+              ${guardrailNote}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // AJANI CANLI YENİDEN KOŞ SİMÜLASYONU
+    function reRunAgentLoop() {
+      const c = CUSTOMERS[selectedCustKey];
+      const box = document.getElementById('agent-steps-timeline');
+      box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted)">⏳ Ajan tool-calling döngüsü canlı olarak yürütülüyor (${c.name})...</div>`;
+
+      let currentStep = 0;
+      const interval = setInterval(() => {
+        currentStep++;
+        const subset = c.steps.slice(0, currentStep);
+        box.innerHTML = subset.map((s, idx) => `
+          <div class="agent-step-item ${idx === currentStep - 1 ? 'executing' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span class="step-badge" style="background:rgba(217, 83, 0, 0.15);color:var(--ing-primary)">
+                  Adım ${idx + 1} · ${s.agent}
+                </span>
+                <strong style="color:#FFFFFF;font-size:13px;margin-left:6px;font-family:'JetBrains Mono'">${s.tool}()</strong>
+              </div>
+              <span style="font-family:'JetBrains Mono';font-size:11px;color:var(--status-green)">${s.ms} ms</span>
+            </div>
+            <div class="step-cot-box">
+              <strong style="color:#7EA5D9">🧠 CoT:</strong> ${s.desc}
+            </div>
+            <div class="step-code">
+              <div><span style="color:#7EA5D9">Girdi:</span> ${escapeHtml(s.in)}</div>
+              <div style="margin-top:4px"><span style="color:#3DAF7E">Çıktı:</span> ${escapeHtml(s.out)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        if (currentStep >= c.steps.length) {
+          clearInterval(interval);
+          setTimeout(() => loadAgentStepsFor(selectedCustKey), 800);
+        }
+      }, 350);
+    }
+
+    // İNTERAKTİF PLAYGROUND SİMÜLASYON RUNNER'I
+    function runPlaygroundSimulation() {
+      const name = document.getElementById('play-name').value.trim() || 'Müşteri';
+      const age = parseInt(document.getElementById('play-age').value) || 45;
+      const loan = document.getElementById('play-loan').value;
+      const dask = document.getElementById('play-dask').value === 'true';
+
+      const isSenior = age >= 65;
+      let months = (loan === 'kart') ? 2 : 3;
+      if (isSenior) months += 1;
+      months = Math.min(months, 6);
+
+      const resBox = document.getElementById('playground-result-box');
+      const resStatus = document.getElementById('play-result-status');
+      const resPlan = document.getElementById('play-result-plan');
+      const resMsg = document.getElementById('play-result-msg');
+
+      resBox.style.display = 'block';
+      resStatus.innerHTML = '⏳ Ajan A & B çalıştırılıyor...';
+      resPlan.innerHTML = 'Kural motoru devrede...';
+      resMsg.innerHTML = 'Sentetik agent adımları icra ediliyor...';
+
+      setTimeout(() => {
+        resStatus.innerHTML = `✓ Ajan Döngüsü Başarılı · ${isSenior ? '⭐ Yüksek Öncelik (65+ Yaş)' : 'Standart Kapsam'}`;
+        resPlan.innerHTML = `🎯 Sonuç: ${months} Ay Faizsiz Erteleme (Kod Üst Sınırı 6 Ay)`;
+        resMsg.innerHTML = `"Sayın ${name}, geçmiş olsun. Afet bölgesi kapsamında ${loan === 'konut' ? 'konut' : (loan === 'ihtiyac' ? 'ihtiyaç' : 'kredi kartı')} borcunuz için ${months} aylık kolaylaştırıcı erteleme taslağınız hazırlanmıştır. ${loan === 'konut' && !dask ? 'Konutunuzun sigorta kaydına ulaşılamadığından temsilcimiz danışmanlık amacıyla sizi arayacaktır.' : 'Siz uygun görürseniz onayınızla ilerleyebiliriz.'}"`;
+      }, 600);
+    }
+
+    // ⚡ YENİ AFET SİMÜLASYONU TETİKLEME (DİNAMİK GÜNCELLEME)
+    function runDisasterSimulation() {
+      const btn = document.getElementById('btn-trigger');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Simülasyon Çalışıyor...';
+
+      const pBox = document.getElementById('pipeline-box');
+      const pBar = document.getElementById('progress-bar');
+      const pText = document.getElementById('pipeline-status-text');
+      const pPct = document.getElementById('pipeline-percent-text');
+      const pSub = document.getElementById('pipeline-sub-text');
+
+      pBox.style.display = 'block';
+
+      // Sayıları sıfırla ve artıralım
+      document.getElementById('stat-etkilenen').innerText = '0';
+      document.getElementById('stat-oncelik').innerText = '0';
+      document.getElementById('stat-taslak').innerText = '0';
+      document.getElementById('stat-hacim').innerText = '₺0';
+
+      const now = new Date().toTimeString().split(' ')[0];
+      eventLogs.unshift({
+        time: now,
+        topic: 'disaster.declared',
+        desc: 'YENİ SİMÜLASYON: M7.4 Deprem tetiklendi. Olay kuyruğu uyanıyor.'
+      });
+      renderEvents();
+
+      // Aşama 1: Müşteri eşleme
+      pBar.style.width = '25%';
+      pText.innerText = 'Aşama 1: Etkilenen Müşteriler Eşleştiriliyor...';
+      pPct.innerText = '25%';
+      pSub.innerText = '400 müşteri koordinatları taranıyor...';
+
+      setTimeout(() => {
+        document.getElementById('stat-etkilenen').innerText = '258';
+        pBar.style.width = '55%';
+        pText.innerText = 'Aşama 2: Öncelik Belirleme & Kural Motoru...';
+        pPct.innerText = '55%';
+        pSub.innerText = '65 yaş üstü ve engelli müşteriler tespit edildi (76 kişi).';
+        document.getElementById('stat-oncelik').innerText = '76';
+        
+        eventLogs.unshift({
+          time: new Date().toTimeString().split(' ')[0],
+          topic: 'customer.affected',
+          desc: '258 müşteri afet bölgesiyle eşleştirildi (76 yüksek öncelik).'
+        });
+        renderEvents();
+      }, 700);
+
+      // Aşama 3: Ajan A ve B Taslak Üretimi
+      setTimeout(() => {
+        pBar.style.width = '85%';
+        pText.innerText = 'Aşama 3: Ajan A (Planlayıcı) ve Ajan B (İletişimci) Çalışıyor...';
+        pPct.innerText = '85%';
+        pSub.innerText = '258 erteleme taslağı kod üst sınırlarıyla üretiliyor, mesajlar yazılıyor...';
+        document.getElementById('stat-taslak').innerText = '258';
+        document.getElementById('stat-hacim').innerText = '₺8.54M';
+
+        eventLogs.unshift({
+          time: new Date().toTimeString().split(' ')[0],
+          topic: 'plan.drafted',
+          desc: 'Tüm taslaklar oluşturuldu. Bildirimler müşteri paneline iletildi.'
+        });
+        renderEvents();
+      }, 1400);
+
+      // Tamamlandı
+      setTimeout(() => {
+        pBar.style.width = '100%';
+        pText.innerText = '✓ Simülasyon Başarıyla Tamamlandı';
+        pPct.innerText = '100%';
+        pSub.innerText = 'Planlar hazır. Karar insanda (Müşteri onayı veya temsilci bekleniyor).';
+
+        btn.disabled = false;
+        btn.innerHTML = '<span>⚡</span> Yeni Afet Simülasyonu Tetikle';
+      }, 2100);
+    }
+
+    // MÜŞTERİ PLANI ONAYLAMA (DOĞAL AKIŞ TAMAMLAMA)
+    function approvePlan() {
+      const c = CUSTOMERS[selectedCustKey];
+      const now = new Date().toTimeString().split(' ')[0];
+      
+      c.approved = true;
+      c.escalated = false;
+      c.declined = false;
+
+      eventLogs.unshift({
+        time: now,
+        topic: 'plan.approved',
+        desc: `${c.name} (${c.id}) mobil akış üzerinden planı onayladı → Banka Çalışanı İnceleme Havuzuna eklendi.`
+      });
+      renderEvents();
+
+      // Denetim izine ekle
+      const auditBox = document.getElementById('audit-log-box');
+      if (auditBox) {
+        auditBox.innerHTML = `<div>[${now}] <strong style="color:var(--status-green)">plan.approved</strong> → ${c.name} mobilden onayladı (${c.months})</div>` + auditBox.innerHTML;
+      }
+
+      // Akış penceresini kapat ve arayüzü güncelle
+      closeAfetFlowModal();
+      updateCustomerView();
+
+      const badgeEl = document.getElementById(`badge-${selectedCustKey}`);
+      if (badgeEl) badgeEl.innerText = '✓ Müşteri Onayladı → Çalışan Havuzunda';
+
+      alert(`Sayın ${c.name},\n\n${c.loanType} için ${c.months} erteleme talebiniz başarıyla alınmıştır.\n\nBanka çalışanının onay havuzuna iletildi. Yetkili personel nihai kontrolleri tamamladıktan sonra tarafınıza SMS ile bilgilendirme yapılacaktır.`);
+    }
+
+    // TEMSİLCİ DEVİR
+    function openEscalate() {
+      document.getElementById('escalate-modal').style.display = 'flex';
+    }
+    function closeEscalate() {
+      document.getElementById('escalate-modal').style.display = 'none';
+    }
+    function submitEscalate() {
+      const reason = document.getElementById('escalate-reason').value;
+      const c = CUSTOMERS[selectedCustKey];
+      const now = new Date().toTimeString().split(' ')[0];
+      
+      c.escalated = true;
+      c.approved = false;
+      c.declined = false;
+
+      closeEscalate();
+      closeAfetFlowModal();
+
+      eventLogs.unshift({
+        time: now,
+        topic: 'plan.escalated',
+        desc: `${c.name} temsilci talebinde bulundu (${reason}) → Öncelikli Çağrı Listesine aktarıldı.`
+      });
+      renderEvents();
+
+      const auditBox = document.getElementById('audit-log-box');
+      if (auditBox) {
+        auditBox.innerHTML = `<div>[${now}] <strong style="color:#B3A4DB">plan.escalated</strong> → ${c.name} temsilciye devredildi (${reason})</div>` + auditBox.innerHTML;
+      }
+
+      updateCustomerView();
+
+      const badgeEl = document.getElementById(`badge-${selectedCustKey}`);
+      if (badgeEl) badgeEl.innerText = '☎ Temsilciye Devredildi';
+
+      alert(`Talebiniz alınmıştır. Afet Öncelik Masası müşteri temsilcimiz en kısa sürede sizi telefonla arayacaktır.`);
+    }
+
+    // İLK YÜKLEME
+    renderEvents();
+    switchTab('customer');
+    pickCustomer('hatice');
+    loadAgentStepsFor('hatice');
+  </script>
+</body>
+</html>
