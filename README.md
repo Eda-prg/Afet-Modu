@@ -328,28 +328,6 @@ Proje kök dizinindeki [`api-docs.html`](file:///c:/Users/topal/Desktop/afet%20m
 EVENT_BUS_BACKEND=redis docker compose up
 ```
 
----
-
-## 📅 Zaman Planı
-
-| Tarih | Programcı | YBS Öğrencisi |
-|---|---|---|
-| 4 Ekim'e kadar | Başvuru özeti | Problem ve etki metni |
-| 9 Ekim | Docker Compose iskeleti, Postgres şeması (Alembic), auth-service (JWT, RBAC) | Mevzuat/varsayım araştırması |
-| 10 Ekim | core-service, sentetik veri tohumlama, disaster-service | KPI tanımları |
-| 11 Ekim | Kafka olay yolu (yedek: Redis Streams), agent-service iskeleti | Süreç şeması |
-| 12 Ekim | Ajan döngüsü + araçlar, **ilk uçtan uca dilim** | Mesaj dili kontrolü |
-| 13 Ekim | 400 müşteriye ölçekle, prompt sıkılaştırma, SSE | Sunum iskeleti |
-| 14 Ekim | Next.js: giriş, çalışan konsolu | Sunum metni |
-| 15 Ekim | Harita, müşteri ekranı, onay akışı | Demo provası |
-| 16 Ekim | Öncelik/DASK farkı, hata durumları, testler | KPI rakamları sunuma |
-| 17 Ekim | Prova, README, **her şey bitmiş** | Sunum bitmiş |
-| 18 Ekim | Video ve teslim | Video ve teslim |
-
-> 🥇 **Altın Kural:** 12 Ekim'e kadar tek bir olay uçtan uca çalışmalı.
-
----
-
 ## 📈 KPI ve Banka İçin Değer
 
 | KPI | Tanım |
@@ -396,6 +374,3 @@ EVENT_BUS_BACKEND=redis docker compose up
 
 ---
 
-<div align="center">
-  <sub>Sentetik veri ile hazırlanmış prototip · ING Hubs Türkiye Agentic AI Hackathon 2026</sub>
-</div>
