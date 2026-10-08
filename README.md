@@ -1,7 +1,6 @@
 # 🚨 Afet Modu — Müşteri Başvurmaz, Banka Müşteriye Gelir
 
-> **ING Hubs Türkiye · Agentic AI Hackathon**
-> Online: 9–18 Ekim · Final: 3 Kasım 2026
+
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://python.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://typescriptlang.org)
